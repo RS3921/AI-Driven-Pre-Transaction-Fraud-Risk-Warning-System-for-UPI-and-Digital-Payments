@@ -1,0 +1,8 @@
+{
+  "model": "TF-IDF + Logistic Regression",
+  "test_samples": 1115,
+  "precision": 0.9514,
+  "recall": 0.9195,
+  "f1_score": 0.9352,
+  "roc_auc": 0.986
+}
