@@ -1,0 +1,371 @@
+{
+  "manifest_schema": "upi-fraud-guard-reproducibility/v1",
+  "generated_utc": "2026-10-23 06:38:20 UTC",
+  "source_revision": {
+    "repository": "https://github.com/RS3921/AI-Driven-Pre-Transaction-Fraud-Risk-Warning-System-for-UPI-and-Digital-Payments.git",
+    "branch": "codex/multilingual-android-updates",
+    "commit": "6cb95a35185135b3c36c571f854ecc3276e10cfb",
+    "commit_subject": "docs: expand project README and methodology",
+    "worktree_clean_before_manifest": true,
+    "implementation_revision": "21b1f9e (parent implementation commit; HEAD changes README only)",
+    "github_remote_ref_verified": {
+      "ref": "refs/heads/codex/multilingual-android-updates",
+      "commit": "6cb95a35185135b3c36c571f854ecc3276e10cfb",
+      "checked_via": "git ls-remote"
+    }
+  },
+  "environment": {
+    "python": "3.14.3 (main, Mar  3 2026, 15:00:44) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "win32",
+    "installed_versions": {
+      "pandas": "3.0.1",
+      "scikit-learn": "1.8.0",
+      "joblib": "1.5.3",
+      "fastapi": null,
+      "uvicorn": null,
+      "Pillow": "12.1.1",
+      "pyzbar": null,
+      "python-multipart": null,
+      "imbalanced-learn": null,
+      "shap": null,
+      "numpy": "2.4.3",
+      "scipy": "1.17.1"
+    },
+    "requirements_txt": [
+      "# scikit-learn is pinned to an EXACT version (not >=) on purpose: trained",
+      "# .joblib model files are not always compatible across scikit-learn",
+      "# versions (a newer version's internal model format can break when",
+      "# loaded by an older version, and vice versa). Pinning guarantees your",
+      "# installed version always matches the version these models were",
+      "# trained and saved with, avoiding \"AttributeError\" crashes at startup.",
+      "pandas>=2.0",
+      "scikit-learn==1.7.2",
+      "joblib>=1.3",
+      "fastapi>=0.110",
+      "uvicorn[standard]>=0.27",
+      "Pillow>=10.0",
+      "pyzbar>=0.1.9",
+      "python-multipart>=0.0.9",
+      "imbalanced-learn>=0.12",
+      "shap>=0.45"
+    ],
+    "note": "These are versions available to the manifest-generation interpreter, not proven training-time versions. Missing packages are null; the project training environment is not currently reproducible."
+  },
+  "datasets": [
+    {
+      "path": "data/spam_raw.csv",
+      "present": true,
+      "size_bytes": 503663,
+      "sha256": "440e6ea9fa825578abfdd7b7932ef8393d72ef86c0c33f64676705ce40b1dfc2",
+      "data_rows_excluding_header": null
+    },
+    {
+      "path": "data/messages_clean.csv",
+      "present": true,
+      "size_bytes": 472945,
+      "sha256": "d529d9689fd216fc08f95d3c67a572354c2c2b776f208e1f7cdef0f81802a6c1",
+      "data_rows_excluding_header": 5572
+    },
+    {
+      "path": "data/message_training_additions.csv",
+      "present": true,
+      "size_bytes": 31664,
+      "sha256": "c30b875cfdaf342403feeccb2b1fb97443364217e99b393244a4a8a6267735bb",
+      "data_rows_excluding_header": 306
+    },
+    {
+      "path": "data/multilingual_training_subset.csv",
+      "present": true,
+      "size_bytes": 10202763,
+      "sha256": "b1d8af322f0ac3df6378ca84b5948e9b8a82464812f29683ae5a9f92a5fd2017",
+      "data_rows_excluding_header": 63958
+    },
+    {
+      "path": "data/multilingual_external_holdout.csv",
+      "present": true,
+      "size_bytes": 1163936,
+      "sha256": "c8a73e4d40d8ac2f009fd6ad20b60018d0dd9f5e44954eee01b9862b62db8c25",
+      "data_rows_excluding_header": 7636
+    },
+    {
+      "path": "data/multilingual_holdout_eval.csv",
+      "present": true,
+      "size_bytes": 6506,
+      "sha256": "da7ef8a55e4158af6bf9dd06c8899e590b6a6352299977bdfc8eaa8869485c7d",
+      "data_rows_excluding_header": 60
+    },
+    {
+      "path": "data/marathi_synthetic_supplement.csv",
+      "present": true,
+      "size_bytes": 34029,
+      "sha256": "99035091562e71308b6508d91901a6bd03f50047976106ea25f620bcdcd6726d",
+      "data_rows_excluding_header": 127
+    },
+    {
+      "path": "data/marathi_translated_training.csv",
+      "present": true,
+      "size_bytes": 1261708,
+      "sha256": "4fe98ab6cd93e8d96588be7ba415a8ad66e78d7353247ab1e16ea543332486cb",
+      "data_rows_excluding_header": 3519
+    },
+    {
+      "path": "data/marathi_translated_holdout.csv",
+      "present": true,
+      "size_bytes": 338999,
+      "sha256": "744c4301e44bb37e9d3527d5372863aba7c20d973b7e95c45ef9cb8f557a8835",
+      "data_rows_excluding_header": 938
+    },
+    {
+      "path": "data/transactions_dataset.csv",
+      "present": true,
+      "size_bytes": 5119211,
+      "sha256": "c4ab14df585b47706fdf4191e75f9f41a5bcd461151afefee5cc98e6ea7a6a1b",
+      "data_rows_excluding_header": 268213
+    },
+    {
+      "path": "data/real_url_lists/legitimate_urls.txt",
+      "present": true,
+      "size_bytes": 39202,
+      "sha256": "88ffc3ae6e111b8d77799a69b56653187c678d9c5266764d97648269b69ac310"
+    },
+    {
+      "path": "data/real_url_lists/modern_legit_roots.txt",
+      "present": true,
+      "size_bytes": 2918,
+      "sha256": "2908b262b9d48bf7a8a6580d306ffdd7bb0d0d4a947aeef2a9929536443506e9"
+    },
+    {
+      "path": "data/real_url_lists/1000-phishing.txt",
+      "present": true,
+      "size_bytes": 66138,
+      "sha256": "a763f51e0a7d4d2fec28521c21d50165ed7d719a0dd9e1fc544a19074c78b15d"
+    },
+    {
+      "path": "data/real_url_lists/openphish_feed.txt",
+      "present": true,
+      "size_bytes": 18323,
+      "sha256": "fed60f41b2629daf80f88b807703cf89853a6a943581d4d5f41b4d5fd4bb459d"
+    },
+    {
+      "path": "data/real_url_lists/phishtank_feed.txt",
+      "present": true,
+      "size_bytes": 368151,
+      "sha256": "ce2cacc6cf55ad9f704590980ffcd3c1fd1e3d716f7a5d572b1cdd6ec55c7620"
+    }
+  ],
+  "training_code": [
+    {
+      "path": "nlp_module/1_prepare_data.py",
+      "present": true,
+      "size_bytes": 1721,
+      "sha256": "3f5c9b11b9c218628befbecc6d7cf7f078939d19f844360291a1c665ae8303e8"
+    },
+    {
+      "path": "nlp_module/0_prepare_marathi_translation_data.py",
+      "present": true,
+      "size_bytes": 2555,
+      "sha256": "dcc54811143dae207a7cb14935131670d2fa36c535a411f2261ef99d084ea98a"
+    },
+    {
+      "path": "nlp_module/2_train_model.py",
+      "present": true,
+      "size_bytes": 12784,
+      "sha256": "ca659dc2c9d15ec9fde152739f9a2ebf7730ae7d4135649dca519eac21bff2a4"
+    },
+    {
+      "path": "nlp_module/4_evaluate_multilingual.py",
+      "present": true,
+      "size_bytes": 4276,
+      "sha256": "5475865c7ffdcdef9abf5debdcb2f2abeeb8700a04f7e1be7288ebd9561a434a"
+    },
+    {
+      "path": "nlp_module/5_evaluate_external_holdout.py",
+      "present": true,
+      "size_bytes": 4034,
+      "sha256": "db5f52cc349321b556d257617e0242f0ddcfca969f0f4de5d5f0bb23fd355f5e"
+    },
+    {
+      "path": "nlp_module/6_evaluate_marathi_translation_holdout.py",
+      "present": true,
+      "size_bytes": 3511,
+      "sha256": "30862c8fee9291ed6ebecaf02f4d9cb42691bc3c5d30a99765a6ff03925bbfba"
+    },
+    {
+      "path": "url_qr_module/train_model.py",
+      "present": true,
+      "size_bytes": 8475,
+      "sha256": "59b6d7f638dbe5b248eb1ba100ab99e5615054adcf66bc329e401d4f66767e54"
+    },
+    {
+      "path": "url_qr_module/url_features.py",
+      "present": true,
+      "size_bytes": 3466,
+      "sha256": "2556297339d90dac1489a38df493281e7b5ef980587e1986e3d24a6d05c4f084"
+    },
+    {
+      "path": "transaction_module/1_generate_dataset.py",
+      "present": true,
+      "size_bytes": 7877,
+      "sha256": "deaaff1792e2bc575da4d1be5b6e165f324685c167f25d50fae57c15aa6ac602"
+    },
+    {
+      "path": "transaction_module/2_train_model.py",
+      "present": true,
+      "size_bytes": 4954,
+      "sha256": "73f3c696cbab8e8a8ab9869b176b2788d45552a43fb29a7f9512bc53e5afe96a"
+    },
+    {
+      "path": "transaction_module/transaction_features.py",
+      "present": true,
+      "size_bytes": 755,
+      "sha256": "a5ee9744c7980e214af35e32d62c3dc03d331f76c5e78a2d07cd1da37530ce1e"
+    },
+    {
+      "path": "risk_fusion.py",
+      "present": true,
+      "size_bytes": 1482,
+      "sha256": "6103cd7dbd03867885e0a1ea2416c18f4e9a21131a34c108cb6478fb7114549c"
+    },
+    {
+      "path": "api/main.py",
+      "present": true,
+      "size_bytes": 16397,
+      "sha256": "b69023f3cfb74ad1f17279f9275404c0137338355d499ab862143bd95e413fc4"
+    }
+  ],
+  "saved_models": [
+    {
+      "path": "models/nlp_model.joblib",
+      "present": true,
+      "size_bytes": 256863,
+      "sha256": "097bea033b913d716733f28d68a82687d4190a4bb3080b0445b0f97f2bd3a7ee"
+    },
+    {
+      "path": "models/nlp_vectorizer.joblib",
+      "present": true,
+      "size_bytes": 1155067,
+      "sha256": "e046218e8a5bc8c198cfd6ed30097c10351d26a66537b15fab07d0eb8f221079"
+    },
+    {
+      "path": "models/url_model.joblib",
+      "present": true,
+      "size_bytes": 5775145,
+      "sha256": "4da125ee817e6d805881d202cc6654e49560e17701a0fcf9f89e9e5f1b8b462e"
+    },
+    {
+      "path": "models/transaction_model.joblib",
+      "present": true,
+      "size_bytes": 4364457,
+      "sha256": "15dca88fe431ef4bbe53ae3ccfecd872963a71a42af5e7e79508e6f706c60e07"
+    },
+    {
+      "path": "models/ieee_transaction_model.joblib",
+      "present": true,
+      "size_bytes": 6064025,
+      "sha256": "19ef3745416d473a7cbb32bb1eb62fe9957030cda040669f4e29a6a45439aa9f"
+    }
+  ],
+  "saved_metrics": [
+    {
+      "path": "models/ieee_cross_validation_metrics.json",
+      "present": true,
+      "size_bytes": 695,
+      "sha256": "41980628323d4f88d6cb80d0df4e1006f4e37297dc1afa2b122af0e1444a0052"
+    },
+    {
+      "path": "models/marathi_translated_metrics.json",
+      "present": true,
+      "size_bytes": 904,
+      "sha256": "816f3af2980155da2c94b66b4eeb235de6bee2b56ae10206240ecebbe78bbe64"
+    },
+    {
+      "path": "models/multilingual_eval_metrics.json",
+      "present": true,
+      "size_bytes": 2239,
+      "sha256": "b8ae06e325faf75e479e6e6978a373f61175c5d7d86f4d927be35bf5b2947250"
+    },
+    {
+      "path": "models/multilingual_external_metrics.json",
+      "present": true,
+      "size_bytes": 1917,
+      "sha256": "5b79059cc2223dbe194cf24594072f4ffc2ef29b0f89340b181c422d904030d1"
+    },
+    {
+      "path": "models/nlp_metrics.json",
+      "present": true,
+      "size_bytes": 1598,
+      "sha256": "70ec45939c19c469248b3bffac1fd9a52b144e7a31f9183400c0e5aa6236668e"
+    },
+    {
+      "path": "models/transaction_metrics.json",
+      "present": true,
+      "size_bytes": 195,
+      "sha256": "1ff3687b6258c64e5ca778f8dce67823d3b810695b7d53a49de3ca3d961ba2ce"
+    },
+    {
+      "path": "models/url_metrics.json",
+      "present": true,
+      "size_bytes": 166,
+      "sha256": "3037dd5dc23223c466f0c0dc88663b903740bbea1430c11cff29ac475072a5ec"
+    }
+  ],
+  "split_settings": {
+    "message_original_sms": "train_test_split(test_size=0.2, random_state=42, stratify=target); held-out test remains original SMS only",
+    "message_api_threshold": 0.3,
+    "message_classifier_metric_threshold": 0.5,
+    "multilingual_external": "separate source test split, filtered for overlaps; not loaded by message trainer",
+    "marathi_translation": "source-message-grouped holdout; 938 source rows (851 safe, 87 risky), excluded from training",
+    "url": "train_test_split(test_size=0.2, random_state=42, stratify=target); RandomUnderSampler(sampling_strategy=0.5, random_state=42) applied to training only",
+    "transaction": "train_test_split(test_size=0.2, random_state=42, stratify=target)"
+  },
+  "model_parameters": {
+    "message": {
+      "features": "FeatureUnion: word TfidfVectorizer(max_features=12000, ngram_range=(1,2), sublinear_tf=True, min_df=2); char_wb TfidfVectorizer(max_features=20000, ngram_range=(3,5), sublinear_tf=True, min_df=2)",
+      "estimator": "LogisticRegression(max_iter=1000, random_state=42)",
+      "sample_weight": "Equal 25% total weight per English, Hindi, Marathi (incl. Marathlish), Hinglish bucket"
+    },
+    "url": {
+      "features": "12 lexical features; HTTPS excluded",
+      "estimator": "RandomForestClassifier(n_estimators=200, max_depth=12, class_weight=balanced, random_state=42, n_jobs=1)"
+    },
+    "transaction": {
+      "features": [
+        "amount",
+        "is_new_recipient",
+        "payments_last_hour",
+        "is_night"
+      ],
+      "estimator": "RandomForestClassifier(n_estimators=200, max_depth=8, class_weight=balanced, random_state=42, n_jobs=1)"
+    },
+    "fusion": {
+      "weights": {
+        "message": 0.4,
+        "url_or_upi": 0.35,
+        "transaction": 0.25
+      },
+      "verdict_thresholds": {
+        "safe_below": 0.3,
+        "suspicious_from": 0.3,
+        "high_risk_from": 0.65
+      },
+      "two_high_signals_floor": 0.72
+    }
+  },
+  "lineage_status": "Current model hashes are recorded, but the available artifacts have no embedded training-run ID; exact historical binary-to-data/script lineage is unverified.",
+  "rerun_status": {
+    "status": "blocked",
+    "details": "A project-isolated virtual environment was created, but dependencies could not be retrieved because pypi.org DNS/network access failed. No model artifacts or metric JSON files were overwritten.",
+    "api_runtime_status": "not run; FastAPI and project dependencies were unavailable in the environment."
+  },
+  "paper_provenance": {
+    "paper_source_commit": null,
+    "status": "unverified",
+    "note": "The exact paper draft and its version history are unavailable. The code-bearing project implementation is commit 21b1f9e; branch HEAD 6cb95a3 changes README.md only. This does not prove which revision the paper used."
+  },
+  "literature_verification": {
+    "expected_references": 13,
+    "verified": 0,
+    "status": "blocked",
+    "note": "The accessible progress report contains no bibliography and the project checkout has no BibTeX/RIS/reference list. The original report path provided by the user is unavailable in this environment. Publisher checks require the 13 citation records."
+  }
+}
