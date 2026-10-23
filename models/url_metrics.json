@@ -1,8 +1,8 @@
 {
   "model": "Lexical features + Random Forest",
   "test_samples": 1737,
-  "precision": 0.9838,
-  "recall": 0.8874,
-  "f1_score": 0.9331,
-  "roc_auc": 0.9588
+  "precision": 0.9837,
+  "recall": 0.8795,
+  "f1_score": 0.9287,
+  "roc_auc": 0.9587
 }

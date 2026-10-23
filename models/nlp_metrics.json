@@ -1,8 +1,41 @@
 {
-  "model": "TF-IDF + Logistic Regression",
+  "model": "Word + character TF-IDF + Logistic Regression",
+  "training_original_messages": 4457,
+  "training_curated_upi_examples": 306,
+  "training_multilingual_examples": 63958,
+  "training_marathlish_synthetic_examples": 127,
+  "training_marathi_machine_translated_examples": 3519,
+  "marathi_machine_translation_note": "Supplemental training only; machine-translated from English SMS, not native-speaker-reviewed, with source-message-grouped holdout evaluation.",
+  "language_weighting": "equal: English, Hindi, Marathi (including Marathlish), and Hinglish each contribute 25% of classifier loss; each language retains its observed safe/risky label proportions",
+  "training_language_bucket_rows": {
+    "English": 60683,
+    "Hindi": 5269,
+    "Hinglish": 2706,
+    "Marathi": 3709
+  },
+  "training_language_bucket_weight_share": {
+    "English": 0.25,
+    "Hindi": 0.25,
+    "Hinglish": 0.25,
+    "Marathi": 0.25
+  },
+  "test_language": "English; original SMS corpus held-out split",
+  "multilingual_training_by_language_and_label": {
+    "english_risk_0": 33786,
+    "english_risk_1": 22251,
+    "hindi_risk_0": 4725,
+    "hindi_risk_1": 501,
+    "hinglish_risk_0": 1531,
+    "hinglish_risk_1": 1164
+  },
   "test_samples": 1115,
-  "precision": 0.9514,
-  "recall": 0.9195,
-  "f1_score": 0.9352,
-  "roc_auc": 0.986
+  "precision": 0.965,
+  "recall": 0.9262,
+  "f1_score": 0.9452,
+  "roc_auc": 0.9964,
+  "notification_threshold": 0.3,
+  "notification_scoring": "word+character model, multilingual rules, explicit-safe-context cap",
+  "notification_precision": 0.9051,
+  "notification_recall": 0.9597,
+  "notification_f1_score": 0.9316
 }

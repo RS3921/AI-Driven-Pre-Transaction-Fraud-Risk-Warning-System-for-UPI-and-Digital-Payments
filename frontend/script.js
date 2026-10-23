@@ -1,30 +1,91 @@
-const $=id=>document.getElementById(id), riskClass=v=>v==='High Risk'?'danger':v==='Suspicious'?'warning':'safe';
-// currentRange is either {type:'preset', days:N} or {type:'custom', start:ISO, end:ISO}
-let currentRange={type:'preset',days:7};
-const scenarios={safe:{message:'Hi Riya, I have sent ₹500 for dinner yesterday. Thank you!',amount:500,recipient:'riya@upi',frequency:1,newRecipient:false},warning:{message:'Your KYC expires today. Verify your UPI account immediately to avoid being blocked.',amount:2500,recipient:'helpdesk@upi',frequency:1,newRecipient:true},danger:{message:'URGENT! Your bank account is blocked. Verify your UPI PIN now to receive your refund.',url:'http://bit.ly/upi-verify-now',amount:50000,recipient:'newuser@upi',frequency:6,newRecipient:true}};
-document.querySelectorAll('.nav').forEach(btn=>btn.onclick=()=>showTab(btn.dataset.tab)); document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{showTab(b.dataset.goto);if(b.dataset.openCustom){const bar=$('customRangeBar');if(bar&&!bar.classList.contains('open'))$('customToggle').click();}});
-function showTab(id){document.querySelectorAll('.tab,.nav').forEach(x=>x.classList.remove('active')); $(id).classList.add('active'); document.querySelectorAll(`.nav[data-tab="${id}"]`).forEach(n=>n.classList.add('active')); if(id==='analytics'||id==='overview') loadAnalytics(); if(id==='analytics')loadHistory();if(id==='flow')loadModelMetrics();window.scrollTo({top:0,behavior:'smooth'});}
-function esc(v){const d=document.createElement('div');d.textContent=v;return d.innerHTML} function setScenario(name){const s=scenarios[name];$('message').value=s.message||'';$('url-qr').value=s.url||'';$('amount').value=s.amount||'';$('recipient').value=s.recipient||'';$('frequency').value=s.frequency||'';$('new-recipient').checked=s.newRecipient;showTab('analyse')}
-document.querySelectorAll('.scenario').forEach(b=>b.onclick=()=>setScenario(b.dataset.scenario)); $('clear').onclick=()=>{$('risk-form').reset();};
-$('qr-image').onchange=async e=>{const file=e.target.files[0],status=$('qr-status');if(!file)return;status.className='qr-status loading';status.textContent='Decoding QR image locally...';const body=new FormData();body.append('image',file);try{const r=await fetch('/scan-qr',{method:'POST',body});const d=await r.json();if(!r.ok)throw Error(d.detail||'Could not read this QR image.');$('url-qr').value=d.payload;status.className='qr-status success';status.textContent=`QR decoded · ${d.kind} · ${Math.round(d.risk_score*100)}% link/QR risk`;}catch(err){status.className='qr-status error';status.textContent=err.message||'Could not read this QR image.';}};
-$('risk-form').onsubmit=async e=>{e.preventDefault();const payload={message:$('message').value,url_or_qr:$('url-qr').value,amount:$('amount').value?+$('amount').value:null,recipient:$('recipient').value,payments_last_hour:$('frequency').value?+$('frequency').value:null,is_new_recipient:$('new-recipient').checked};if(!payload.message&&!payload.url_or_qr&&payload.amount===null){$('message').focus();return}const b=$('check-btn');b.disabled=true;b.innerHTML='Analysing protection layers...';try{const r=await fetch('/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw Error();showResult(await r.json());loadAnalytics(currentRange)}catch{$('result').className='panel result error';$('result').innerHTML='<p class="eyebrow">CONNECTION ERROR</p><h3>Could not complete the check</h3><p>Start the project using <code>python run_api.py</code>, then retry.</p>'}finally{b.disabled=false;b.innerHTML='Analyse payment risk <b>→</b>'}};
-function shapBlock(d){
-  const groups=d.shap_explanations||{};
-  const labels={message:'Message model',url_qr:'Link/QR model',transaction:'Transaction model'};
-  const sections=Object.entries(labels).map(([key,label])=>{
-    const items=groups[key];
-    if(!items||!items.length)return'';
-    const rows=items.map(x=>{
-      const pct=Math.round(Math.abs(x.contribution)*400); // scaled for visible bar length, SHAP values are small
-      const dir=x.direction==='increased_risk'?'up':'down';
-      return `<div class="shap-row ${dir}"><span>${esc(x.label)}</span><i><b style="width:${Math.min(pct,100)}%"></b></i><small>${x.direction==='increased_risk'?'+':'−'}${Math.abs(x.contribution).toFixed(3)}</small></div>`;
-    }).join('');
-    return `<div class="shap-group"><small>${label}</small>${rows}</div>`;
-  }).filter(Boolean).join('');
-  if(!sections)return'';
-  return `<div class="reason-title">Model attribution (SHAP)</div><p class="shap-hint">Exactly how much each signal pushed THIS specific prediction up (red) or down (green) -- real per-prediction model math, not a general description.</p>${sections}`;
+const $ = id => document.getElementById(id);
+const riskClass = verdict => verdict === 'High Risk' ? 'danger' : verdict === 'Suspicious' ? 'warning' : 'safe';
+let currentRange = { type: 'preset', days: 7 };
+let apiToken = '';
+
+async function apiFetch(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+  if (apiToken) headers.set('Authorization', `Bearer ${apiToken}`);
+  const response = await fetch(url, { ...options, headers });
+  if (response.status === 401) {
+    apiToken = '';
+    const gate = $('api-auth-gate');
+    gate.hidden = false;
+    $('api-auth-message').textContent = 'The token was rejected or revoked. Enter a valid token to reconnect.';
+    $('api-token').value = '';
+  }
+  if (!response.ok) throw new Error(`API request failed (HTTP ${response.status})`);
+  return response;
 }
-function showResult(d){const c=riskClass(d.verdict),score=Math.round(d.risk_score*100);$('result').className=`panel result ${c}`;$('result').innerHTML=`<p class="eyebrow">LIVE VERDICT</p><div class="verdict"><div><span class="verdict-tag ${c}">${d.verdict}</span><h2>${score}<small>/100 risk score</small></h2><p>${d.verdict==='Safe'?'No strong fraud pattern was found in the inputs supplied.':'Pause before paying and independently verify the recipient.'}</p></div><div class="score-ring" style="--p:${score}"><b>${score}</b><small>RISK</small></div></div><div class="reason-title">Why this verdict</div><ul>${d.reasons.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>${shapBlock(d)}`;$('modules').innerHTML=Object.entries(d.module_scores).map(([k,v])=>{const label=k==='url_qr'?'Link & QR':k[0].toUpperCase()+k.slice(1);const n=v===null?0:Math.round(v*100);return `<div class="module-row"><span>${label}</span><div><i><b style="width:${n}%"></b></i><strong>${v===null?'—':n+'%'}</strong></div></div>`}).join('')}
+
+async function initialiseDashboard() {
+  try {
+    const response = await fetch('/status');
+    if (!response.ok) throw new Error(`Status request failed (HTTP ${response.status})`);
+    const status = await response.json();
+    if (status.authentication_required) {
+      $('api-auth-gate').hidden = false;
+      $('api-token').focus();
+      return;
+    }
+    loadAnalytics();
+  } catch (error) {
+    $('api-auth-gate').hidden = false;
+    $('api-auth-message').textContent = `Could not reach the API: ${error.message}`;
+  }
+}
+
+$('api-connect').addEventListener('click', async () => {
+  const input = $('api-token');
+  const message = $('api-auth-message');
+  apiToken = input.value.trim();
+  if (!apiToken) {
+    message.textContent = 'Enter the API token issued for your user.';
+    input.focus();
+    return;
+  }
+  message.textContent = 'Checking token…';
+  try {
+    const session = await (await apiFetch('/session')).json();
+    message.textContent = `Connected as ${session.user_id}. The token will be cleared when this page closes.`;
+    input.value = '';
+    $('api-auth-gate').hidden = true;
+    loadAnalytics();
+    if ($('history-list')) loadHistory();
+  } catch {
+    apiToken = '';
+    input.value = '';
+    message.textContent = 'Token validation failed. Check the token and try again.';
+    input.focus();
+  }
+});
+ $('api-token').addEventListener('keydown', event => {
+  if (event.key === 'Enter') $('api-connect').click();
+});
+
+document.querySelectorAll('.nav').forEach(button => {
+  button.addEventListener('click', () => showTab(button.dataset.tab));
+});
+document.querySelectorAll('[data-goto]').forEach(button => {
+  button.addEventListener('click', () => {
+    showTab(button.dataset.goto);
+    if (button.dataset.openCustom) {
+      const rangeBar = $('customRangeBar');
+      if (rangeBar && !rangeBar.classList.contains('open')) $('customToggle').click();
+    }
+  });
+});
+function showTab(id) {
+  document.querySelectorAll('.tab, .nav').forEach(element => element.classList.remove('active'));
+  const page = $(id);
+  if (!page) return;
+  page.classList.add('active');
+  document.querySelectorAll(`.nav[data-tab="${id}"]`).forEach(nav => nav.classList.add('active'));
+  if (id === 'analytics' || id === 'overview') loadAnalytics();
+  if (id === 'analytics') loadHistory();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function fmtBucketLabel(label,bucket){
   // label is either "YYYY-MM-DD" (day bucket) or "YYYY-MM-DDTHH" (hour bucket)
   if(bucket==='hour'){const d=new Date(label+':00:00Z');return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
@@ -93,7 +154,7 @@ function rangeQuery(){return currentRange.type==='custom'?`start=${encodeURIComp
 function fmtFull(iso){return new Date(iso).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
 async function loadAnalytics(){
   try{
-    const d=await (await fetch(`/analytics?${rangeQuery()}`)).json();
+    const d=await (await apiFetch(`/analytics?${rangeQuery()}`)).json();
     $('metric-total').textContent=d.total;$('metric-flagged').textContent=(d.counts['Suspicious']||0)+(d.counts['High Risk']||0);$('metric-clear').textContent=d.counts['Safe']||0;$('metric-alerts').textContent=d.counts['High Risk'];$('donut-total').textContent=d.total;
     chart($('pulse-chart'),d.series,d.bucket);chart($('analytics-chart'),d.series,d.bucket);setDistribution(d.counts,d.total);
     const windowText=`${fmtFull(d.range_start)} → ${fmtFull(d.range_end)} · bucketed by ${d.bucket}`;
@@ -104,11 +165,10 @@ async function loadAnalytics(){
 async function loadHistory(){
   try{
     const extra=currentRange.type==='custom'?`&start=${encodeURIComponent(currentRange.start)}&end=${encodeURIComponent(currentRange.end)}`:'';
-    const rows=await (await fetch(`/history?limit=${currentRange.type==='custom'?100:12}${extra}`)).json();
-    $('history-list').innerHTML=rows.length?`<div class="table"><div class="tr th"><span>VERDICT</span><span>SIGNALS USED</span><span>RISK SCORE</span><span>TIME</span></div>${rows.map(x=>`<div class="tr"><span><b class="badge ${riskClass(x.verdict)}">${x.verdict}</b></span><span>${x.modules_used.join(' · ')}</span><span>${Math.round(x.risk_score*100)}%</span><span>${fmtFull(x.created_at)}</span></div>`).join('')}</div>`:'No completed checks in this window. Try a wider range or run a demo scenario.'
+    const rows=await (await apiFetch(`/history?limit=${currentRange.type==='custom'?100:12}${extra}`)).json();
+    $('history-list').innerHTML=rows.length?`<div class="table"><div class="tr th"><span>VERDICT</span><span>SIGNALS USED</span><span>RISK SCORE</span><span>TIME</span></div>${rows.map(x=>`<div class="tr"><span><b class="badge ${riskClass(x.verdict)}">${x.verdict}</b></span><span>${x.modules_used.join(' · ')}</span><span>${Math.round(x.risk_score*100)}%</span><span>${fmtFull(x.created_at)}</span></div>`).join('')}</div>`:'No checks in this window. Run a message or QR check in the Android app, or widen the range.'
   }catch{}
 }
-async function loadModelMetrics(){const wrap=$('model-metrics-groups');const labels={nlp:'Message model',url:'URL & QR model',transaction:'Transaction model'};try{const d=await (await fetch('/model-metrics')).json();wrap.innerHTML=Object.entries(labels).map(([key,label])=>{const m=d[key];if(!m)return `<div class="model-group"><div><b>${label}</b><small>Not trained yet — run python setup.py</small></div></div>`;const strip=[['Precision',m.precision],['Recall',m.recall],['F1 score',m.f1_score],['ROC-AUC',m.roc_auc]].map(([k,v])=>`<span><small>${k}</small><b>${(v*100).toFixed(2)}%</b></span>`).join('');return `<div class="model-group"><div><b>${label}</b><small>${m.model} · ${m.test_samples.toLocaleString()} held-out samples</small></div><div class="metric-strip">${strip}</div></div>`}).join('')}catch{wrap.innerHTML='<p>Run python setup.py to generate model metrics.</p>'}}
 function selectPreset(days){
   currentRange={type:'preset',days};
   document.querySelectorAll('[data-range]').forEach(x=>x.classList.toggle('selected',x.dataset.range==String(days)));
@@ -142,4 +202,4 @@ $('applyCustomRange').onclick=()=>{
   loadAnalytics(); if($('history-list'))loadHistory();
 };
 $('refresh-history').onclick=()=>{loadHistory();loadAnalytics()};
-loadAnalytics();
+initialiseDashboard();

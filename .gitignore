@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local data and secrets
+**/data/risk_checks.db
+**/data/paysim.csv
+*.env
+
+# Android/Gradle generated files
+**/.gradle/
+**/build/
+**/local.properties

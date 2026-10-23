@@ -8,32 +8,25 @@ transaction modules).
 Run it with:  python 3_predict.py
 """
 
-import joblib
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent  # the upi-fraud-system folder
-MODELS_DIR = BASE_DIR / "models"
-
-model = joblib.load(MODELS_DIR / "nlp_model.joblib")
-vectorizer = joblib.load(MODELS_DIR / "nlp_vectorizer.joblib")
+sys.path.insert(0, str(BASE_DIR))
+from api.main import score_message as score_api_message
 
 
 def score_message(text: str) -> dict:
-    """Takes a message and returns a risk score + verdict."""
-    vec = vectorizer.transform([text])
-    probability_spam = model.predict_proba(vec)[0][1]  # 0.0 to 1.0
-
-    if probability_spam < 0.3:
-        verdict = "Safe"
-    elif probability_spam < 0.7:
-        verdict = "Suspicious"
-    else:
-        verdict = "High Risk"
+    """Use the same model, language rules and safe-context handling as the API."""
+    result = score_api_message(text)
+    score = float(result["score"])
+    verdict = "High Risk" if score >= 0.65 else "Suspicious" if score >= 0.3 else "Safe"
 
     return {
         "message": text,
-        "risk_score": round(float(probability_spam), 3),
+        "risk_score": round(score, 3),
         "verdict": verdict,
+        "reasons": result["reasons"],
     }
 
 

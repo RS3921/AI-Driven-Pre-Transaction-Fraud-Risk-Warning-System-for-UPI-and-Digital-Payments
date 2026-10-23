@@ -1,0 +1,21 @@
+{
+  "dataset": "SMS Spam Multilingual Collection Dataset; Marathi column translated from UCI SMS Spam Collection using M2M100_418M",
+  "evaluation_type": "source-message-grouped translation-transfer holdout; not natural Marathi field evaluation",
+  "notification_threshold": 0.3,
+  "samples": 938,
+  "safe_support": 851,
+  "risky_support": 87,
+  "tp": 77,
+  "fn": 10,
+  "fp": 6,
+  "tn": 845,
+  "precision": 0.9277,
+  "risky_recall": 0.8851,
+  "safe_false_positive_rate": 0.0071,
+  "balanced_accuracy": 0.939,
+  "limitations": [
+    "The Marathi texts were machine-translated from English and are not native-speaker-written or reviewed.",
+    "The source corpus is general SMS ham/spam, not specifically UPI fraud.",
+    "Use this only as a translation-transfer diagnostic; collect consented, native-speaker-reviewed Marathi messages before making real-world performance claims."
+  ]
+}

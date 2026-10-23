@@ -1,0 +1,58 @@
+{
+  "dataset": "ScamShield Multilingual Smishing & Social Engineering Corpus",
+  "dataset_split": "test (never used for training)",
+  "notification_threshold": 0.3,
+  "note": "External benchmark; source mix and class balance vary by language. Rates are reported with class supports. Hindi risky support and Hinglish safe support are small; these are not field-performance guarantees.",
+  "marathi_coverage": "No independent Marathi examples are present in this external test split. Use the balanced Marathi smoke bucket only as a regression check, not as a performance estimate.",
+  "total_samples": 7636,
+  "by_language": {
+    "english": {
+      "tp": 2701,
+      "fn": 67,
+      "fp": 203,
+      "tn": 4098,
+      "samples": 7069,
+      "risky_recall": 0.9758,
+      "safe_false_positive_rate": 0.0472,
+      "safe_specificity": 0.9528,
+      "precision": 0.9301,
+      "f1": 0.9524,
+      "balanced_accuracy": 0.9643,
+      "risky_support": 2768,
+      "safe_support": 4301,
+      "support_warning": null
+    },
+    "hinglish": {
+      "tp": 95,
+      "fn": 0,
+      "fp": 3,
+      "tn": 9,
+      "samples": 107,
+      "risky_recall": 1.0,
+      "safe_false_positive_rate": 0.25,
+      "safe_specificity": 0.75,
+      "precision": 0.9694,
+      "f1": 0.9845,
+      "balanced_accuracy": 0.875,
+      "risky_support": 95,
+      "safe_support": 12,
+      "support_warning": "Small class support; interpret rates as unstable."
+    },
+    "hindi": {
+      "tp": 8,
+      "fn": 3,
+      "fp": 1,
+      "tn": 448,
+      "samples": 460,
+      "risky_recall": 0.7273,
+      "safe_false_positive_rate": 0.0022,
+      "safe_specificity": 0.9978,
+      "precision": 0.8889,
+      "f1": 0.8,
+      "balanced_accuracy": 0.8625,
+      "risky_support": 11,
+      "safe_support": 449,
+      "support_warning": "Small class support; interpret rates as unstable."
+    }
+  }
+}

@@ -15,8 +15,12 @@ TXN_DIR = BASE_DIR / "transaction_module"
 
 steps = [
     ("Cleaning the message dataset", NLP_DIR / "1_prepare_data.py", NLP_DIR),
+    ("Preparing leakage-safe Marathi translation train/holdout data", NLP_DIR / "0_prepare_marathi_translation_data.py", NLP_DIR),
     ("Training the message model", NLP_DIR / "2_train_model.py", NLP_DIR),
     ("Testing the message model on sample messages", NLP_DIR / "3_predict.py", NLP_DIR),
+    ("Evaluating Hindi and Marathi examples", NLP_DIR / "4_evaluate_multilingual.py", NLP_DIR),
+    ("Evaluating the multilingual model on a separate external test set", NLP_DIR / "5_evaluate_external_holdout.py", NLP_DIR),
+    ("Evaluating the machine-translated Marathi holdout", NLP_DIR / "6_evaluate_marathi_translation_holdout.py", NLP_DIR),
     ("Training the URL/QR model on real phishing-URL data", URL_DIR / "train_model.py", URL_DIR),
     ("Generating the transaction dataset", TXN_DIR / "1_generate_dataset.py", TXN_DIR),
     ("Training the transaction model", TXN_DIR / "2_train_model.py", TXN_DIR),

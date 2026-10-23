@@ -137,7 +137,7 @@ X_train, y_train = undersampler.fit_resample(X_train, y_train)
 print(f"After undersampling majority class for training: {len(X_train)} rows "
       f"({y_train.value_counts().to_dict()})\n")
 
-model = RandomForestClassifier(n_estimators=200, max_depth=12, class_weight="balanced", random_state=42, n_jobs=-1)
+model = RandomForestClassifier(n_estimators=200, max_depth=12, class_weight="balanced", random_state=42, n_jobs=1)
 model.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)

@@ -1,0 +1,83 @@
+{
+  "evaluation_type": "balanced curated regression smoke test; not an independent benchmark",
+  "description": "12 hand-authored examples per language bucket (6 safe, 6 risky); use external holdout results for broader evidence.",
+  "notification_threshold": 0.3,
+  "total_samples": 60,
+  "by_language": {
+    "English": {
+      "tp": 6,
+      "fp": 0,
+      "tn": 6,
+      "fn": 0,
+      "samples": 12,
+      "safe_support": 6,
+      "risky_support": 6,
+      "precision": 1.0,
+      "risky_recall": 1.0,
+      "safe_false_positive_rate": 0.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0
+    },
+    "Hindi": {
+      "tp": 6,
+      "fp": 0,
+      "tn": 6,
+      "fn": 0,
+      "samples": 12,
+      "safe_support": 6,
+      "risky_support": 6,
+      "precision": 1.0,
+      "risky_recall": 1.0,
+      "safe_false_positive_rate": 0.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0
+    },
+    "Hinglish": {
+      "tp": 6,
+      "fp": 0,
+      "tn": 6,
+      "fn": 0,
+      "samples": 12,
+      "safe_support": 6,
+      "risky_support": 6,
+      "precision": 1.0,
+      "risky_recall": 1.0,
+      "safe_false_positive_rate": 0.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0
+    },
+    "Marathi": {
+      "tp": 6,
+      "fp": 0,
+      "tn": 6,
+      "fn": 0,
+      "samples": 12,
+      "safe_support": 6,
+      "risky_support": 6,
+      "precision": 1.0,
+      "risky_recall": 1.0,
+      "safe_false_positive_rate": 0.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0
+    },
+    "Marathlish": {
+      "tp": 6,
+      "fp": 0,
+      "tn": 6,
+      "fn": 0,
+      "samples": 12,
+      "safe_support": 6,
+      "risky_support": 6,
+      "precision": 1.0,
+      "risky_recall": 1.0,
+      "safe_false_positive_rate": 0.0,
+      "balanced_accuracy": 1.0,
+      "accuracy": 1.0
+    }
+  },
+  "limitations": [
+    "Small hand-authored sets check known examples and regressions; they cannot estimate real-world accuracy.",
+    "Marathi has no independent external test corpus in this project. Its 12-example bucket is only a smoke check.",
+    "Hinglish and Marathlish are reported separately from native-script Hindi and Marathi."
+  ]
+}

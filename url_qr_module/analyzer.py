@@ -24,6 +24,7 @@ import joblib
 import pandas as pd
 
 from shap_explainability import explain_prediction
+from url_qr_module.upi_qr import parse_upi_payment_uri
 
 FEATURE_LABELS = {
     "url_length": "Overall link length",
@@ -66,25 +67,35 @@ def analyse_url(value: str) -> dict:
         return {"score": None, "reasons": [], "kind": None, "shap_explanation": []}
 
     if value.lower().startswith("upi://"):
-        params = dict(re.findall(r"(?:[?&])([^=&]+)=([^&]*)", value))
-        reasons.append("QR payload is a UPI payment request")
-        amount = params.get("am")
-        if amount:
-            try:
-                if float(amount) >= 10000:
-                    reasons.append("QR request amount is unusually high")
-                    return {"score": 0.42, "reasons": reasons, "kind": "UPI QR payload", "shap_explanation": []}
-            except ValueError:
-                reasons.append("QR payload has an invalid amount field")
-                return {"score": 0.55, "reasons": reasons, "kind": "UPI QR payload", "shap_explanation": []}
-        return {"score": 0.12, "reasons": reasons, "kind": "UPI QR payload", "shap_explanation": []}
+        details = parse_upi_payment_uri(value)
+        if details is None:
+            return {
+                "score": 0.78,
+                "reasons": ["UPI payment QR has an invalid URI format"],
+                "kind": "UPI QR payload",
+                "upi_qr_details": None,
+                "shap_explanation": [],
+            }
+        reasons.append("UPI payment request QR decoded; the payee identity is not independently verified")
+        if details["flags"]:
+            reasons.extend(details["flags"][:3])
+            score = 0.78 if not details["well_formed"] else 0.42
+        else:
+            score = 0.12
+        return {
+            "score": score,
+            "reasons": reasons,
+            "kind": "UPI QR payload",
+            "upi_qr_details": details,
+            "shap_explanation": [],
+        }
 
     candidate = value if "://" in value else f"https://{value}"
     parsed = urlparse(candidate)
     host = (parsed.hostname or "").lower()
     path = f"{parsed.path}?{parsed.query}".lower()
     if not host:
-        return {"score": 0.72, "reasons": ["Link format is invalid or missing a host"], "kind": "URL", "shap_explanation": []}
+        return {"score": 0.72, "reasons": ["Link format is invalid or missing a host"], "kind": "URL", "upi_qr_details": None, "shap_explanation": []}
 
     # --- Rule-based checks: kept as-is, but now feed only the "reasons" ---
     if parsed.scheme != "https":
@@ -114,4 +125,4 @@ def analyse_url(value: str) -> dict:
 
     if not reasons:
         reasons.append("No high-risk URL structure was detected")
-    return {"score": round(min(score, 0.99), 3), "reasons": reasons, "kind": "URL", "shap_explanation": shap_explanation}
+    return {"score": round(min(score, 0.99), 3), "reasons": reasons, "kind": "URL", "upi_qr_details": None, "shap_explanation": shap_explanation}

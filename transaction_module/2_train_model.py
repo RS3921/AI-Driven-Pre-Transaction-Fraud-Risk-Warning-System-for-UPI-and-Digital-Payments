@@ -3,12 +3,15 @@ Step 2: train the transaction-risk classifier -- "Transaction fraud
 detection" was previously rule-based only ("not ML-trained yet").
 
 WHAT THIS SCRIPT DOES (in plain terms):
-Same overall structure as url_qr_module/train_model.py, with one
-important addition: the dataset has a REALISTIC class imbalance (~5%
-anomalous), so this script explicitly compares three ways of handling
-that instead of training naively (which would just predict "normal"
-for everything and still look accurate while catching almost no
-fraud):
+Reads the bundled, preprocessed data/transactions_dataset.csv and trains
+the transaction model from it. In this project archive that dataset has
+268,213 rows (260,000 normal and 8,213 fraud labels) and is the processed
+PaySim-derived training input. The original raw data/paysim.csv is not
+required to train from the bundled processed file. It is needed only if
+you want to regenerate that processed dataset from scratch.
+
+The dataset has an imbalanced fraud class, so this script compares three
+ways of handling it instead of training naively:
 
   1. Baseline -- no imbalance handling.
   2. class_weight="balanced" -- makes each anomalous example count for
@@ -22,11 +25,9 @@ output -- useful evidence for the report/viva. The class_weight model
 is what actually gets shipped (cheap, no synthetic rows needed, easy to
 retrain as new labeled data comes in -- relevant to "adaptive learning").
 
-NOTE FOR THE TEAM: if you get access to real PaySim/IEEE-CIS data
-(Kaggle account required), replace the call to
-1_generate_dataset.py's synthetic generator with a loader that reads
-that CSV and maps its columns onto FEATURE_NAMES from
-transaction_features.py, then rerun this script.
+The shipped model uses the class_weight='balanced' Random Forest. The
+separately packaged IEEE-CIS artifact is for research evaluation and is
+not loaded by the live API.
 
 Run it with:  python 2_train_model.py
 """
@@ -73,18 +74,18 @@ def evaluate(name, model):
 
 print("=" * 60 + "\nComparing class-imbalance handling strategies\n" + "=" * 60 + "\n")
 
-baseline = RandomForestClassifier(n_estimators=200, max_depth=8, random_state=42, n_jobs=-1)
+baseline = RandomForestClassifier(n_estimators=200, max_depth=8, random_state=42, n_jobs=1)
 baseline.fit(X_train, y_train)
 evaluate("Baseline (no imbalance handling)", baseline)
 
-weighted = RandomForestClassifier(n_estimators=200, max_depth=8, class_weight="balanced", random_state=42, n_jobs=-1)
+weighted = RandomForestClassifier(n_estimators=200, max_depth=8, class_weight="balanced", random_state=42, n_jobs=1)
 weighted.fit(X_train, y_train)
 y_pred_w, y_proba_w = evaluate("class_weight='balanced'", weighted)
 
 smote = SMOTE(random_state=42)
 X_train_sm, y_train_sm = smote.fit_resample(X_train, y_train)
 print(f"After SMOTE: {len(y_train_sm)} rows, {y_train_sm.mean() * 100:.1f}% anomalous\n")
-smote_model = RandomForestClassifier(n_estimators=200, max_depth=8, random_state=42, n_jobs=-1)
+smote_model = RandomForestClassifier(n_estimators=200, max_depth=8, random_state=42, n_jobs=1)
 smote_model.fit(X_train_sm, y_train_sm)
 evaluate("SMOTE oversampling", smote_model)
 
