@@ -1,17 +1,17 @@
 {
   "manifest_schema": "upi-fraud-guard-reproducibility/v1",
-  "generated_utc": "2026-10-23 06:38:20 UTC",
+  "generated_utc": "2026-10-23 06:53:16 UTC",
   "source_revision": {
     "repository": "https://github.com/RS3921/AI-Driven-Pre-Transaction-Fraud-Risk-Warning-System-for-UPI-and-Digital-Payments.git",
     "branch": "codex/multilingual-android-updates",
-    "commit": "6cb95a35185135b3c36c571f854ecc3276e10cfb",
-    "commit_subject": "docs: expand project README and methodology",
+    "commit": "2907c7041951e8e14f486eea1112bdce4515a6cb",
+    "commit_subject": "docs: add reproducibility manifest",
     "worktree_clean_before_manifest": true,
-    "implementation_revision": "21b1f9e (parent implementation commit; HEAD changes README only)",
+    "implementation_revision": "21b1f9e (code-bearing implementation; paper-to-commit provenance unverified)",
     "github_remote_ref_verified": {
       "ref": "refs/heads/codex/multilingual-android-updates",
-      "commit": "6cb95a35185135b3c36c571f854ecc3276e10cfb",
-      "checked_via": "git ls-remote"
+      "commit": "2907c7041951e8e14f486eea1112bdce4515a6cb",
+      "checked_via": "prior git ls-remote verification recorded in task history"
     }
   },
   "environment": {
@@ -360,12 +360,78 @@
   "paper_provenance": {
     "paper_source_commit": null,
     "status": "unverified",
-    "note": "The exact paper draft and its version history are unavailable. The code-bearing project implementation is commit 21b1f9e; branch HEAD 6cb95a3 changes README.md only. This does not prove which revision the paper used."
+    "paper_version": "UPI_Fraud_Guard_IEEE_Humanized_References_Removed.docx",
+    "metrics_match_saved_json": "reported module-level numbers were compared with the present saved metric JSON snapshots and match; no training run reproduced them",
+    "note": "Repository code-bearing implementation revision is 21b1f9e and latest branch HEAD is 2907c7041951e8e14f486eea1112bdce4515a6cb. Neither revision is proven to be the code/model run used to produce the paper metrics; saved model artifacts have no training-run ID."
   },
   "literature_verification": {
-    "expected_references": 13,
-    "verified": 0,
-    "status": "blocked",
-    "note": "The accessible progress report contains no bibliography and the project checkout has no BibTeX/RIS/reference list. The original report path provided by the user is unavailable in this environment. Publisher checks require the 13 citation records."
+    "expected_references": 10,
+    "verified": 10,
+    "status": "publisher_metadata_and_DOI_verified",
+    "checked_date": "2026-10-23",
+    "method": "Compared the ten bibliography entries and corresponding in-text citation numbers in the supplied draft with publisher records; DOI identifiers resolve to the listed papers. This checks metadata, not correctness of every interpretation of the papers.",
+    "references": [
+      {
+        "number": 1,
+        "doi": "10.1186/s40854-023-00470-w",
+        "title": "Online payment fraud: from anomaly detection to risk management",
+        "venue": "Financial Innovation 9, article 66 (2023)"
+      },
+      {
+        "number": 2,
+        "doi": "10.1016/j.asoc.2023.110984",
+        "title": "Financial transaction fraud detector based on imbalance learning and graph neural network",
+        "venue": "Applied Soft Computing 149, article 110984 (2023)"
+      },
+      {
+        "number": 3,
+        "doi": "10.3390/s23208499",
+        "title": "BERT-Based Approaches to Identifying Malicious URLs",
+        "venue": "Sensors 23(20), article 8499 (2023)"
+      },
+      {
+        "number": 4,
+        "doi": "10.1038/s41598-024-67550-4",
+        "title": "An imbalanced learning method based on graph tran-smote for fraud detection",
+        "venue": "Scientific Reports 14, article 16560 (2024)"
+      },
+      {
+        "number": 5,
+        "doi": "10.1016/j.ins.2024.120580",
+        "title": "A GNN-based fraud detector with dual resistance to graph disassortativity and imbalance",
+        "venue": "Information Sciences 669, article 120580 (2024)"
+      },
+      {
+        "number": 6,
+        "doi": "10.1007/s42979-024-03532-7",
+        "title": "Detecting Smishing Messages Using BERT and Advanced NLP Techniques",
+        "venue": "SN Computer Science 6, article 109 (2025)"
+      },
+      {
+        "number": 7,
+        "doi": "10.32604/cmes.2025.070745",
+        "title": "Efficient Malicious QR Code Detection System Using an Advanced Deep Learning Approach",
+        "venue": "Computer Modeling in Engineering & Sciences 145(1), 1117–1140 (2025)"
+      },
+      {
+        "number": 8,
+        "doi": "10.1016/j.compeleceng.2025.110428",
+        "title": "Metapath-guided graph neural networks for financial fraud detection",
+        "venue": "Computers & Electrical Engineering 126, article 110428 (2025)"
+      },
+      {
+        "number": 9,
+        "doi": "10.1038/s41598-025-25200-3",
+        "title": "Reinforcement learning with graph neural network (RL-GNN) fusion for real-time financial fraud detection: a context-aware community mining approach",
+        "venue": "Scientific Reports 15, article 42953 (2025)"
+      },
+      {
+        "number": 10,
+        "doi": "10.1016/j.procs.2026.06.347",
+        "title": "A Deep Hybrid Learning Approach for Fraud Detection in Digital Payment Systems Using Bi-LSTM and Ensemble Boosting",
+        "venue": "Procedia Computer Science 283, 2780–2793 (2026)"
+      }
+    ],
+    "in_text_citation_audit": "All numbered in-text citations in the draft resolve to entries [1]–[10], and every listed entry is cited. A related-work synthesis sentence refers to concept drift/privacy-preserving learning without nearby citations that directly establish both claims; narrow or support that sentence."
   }
 }
