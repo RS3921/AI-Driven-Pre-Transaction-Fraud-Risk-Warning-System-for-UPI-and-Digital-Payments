@@ -1,67 +1,6 @@
 const $ = id => document.getElementById(id);
 const riskClass = verdict => verdict === 'High Risk' ? 'danger' : verdict === 'Suspicious' ? 'warning' : 'safe';
 let currentRange = { type: 'preset', days: 7 };
-let apiToken = '';
-
-async function apiFetch(url, options = {}) {
-  const headers = new Headers(options.headers || {});
-  if (apiToken) headers.set('Authorization', `Bearer ${apiToken}`);
-  const response = await fetch(url, { ...options, headers });
-  if (response.status === 401) {
-    apiToken = '';
-    const gate = $('api-auth-gate');
-    gate.hidden = false;
-    $('api-auth-message').textContent = 'The token was rejected or revoked. Enter a valid token to reconnect.';
-    $('api-token').value = '';
-  }
-  if (!response.ok) throw new Error(`API request failed (HTTP ${response.status})`);
-  return response;
-}
-
-async function initialiseDashboard() {
-  try {
-    const response = await fetch('/status');
-    if (!response.ok) throw new Error(`Status request failed (HTTP ${response.status})`);
-    const status = await response.json();
-    if (status.authentication_required) {
-      $('api-auth-gate').hidden = false;
-      $('api-token').focus();
-      return;
-    }
-    loadAnalytics();
-  } catch (error) {
-    $('api-auth-gate').hidden = false;
-    $('api-auth-message').textContent = `Could not reach the API: ${error.message}`;
-  }
-}
-
-$('api-connect').addEventListener('click', async () => {
-  const input = $('api-token');
-  const message = $('api-auth-message');
-  apiToken = input.value.trim();
-  if (!apiToken) {
-    message.textContent = 'Enter the API token issued for your user.';
-    input.focus();
-    return;
-  }
-  message.textContent = 'Checking token…';
-  try {
-    const session = await (await apiFetch('/session')).json();
-    message.textContent = `Connected as ${session.user_id}. The token will be cleared when this page closes.`;
-    input.value = '';
-    $('api-auth-gate').hidden = true;
-    loadAnalytics();
-    if ($('history-list')) loadHistory();
-  } catch {
-    apiToken = '';
-    input.value = '';
-    message.textContent = 'Token validation failed. Check the token and try again.';
-    input.focus();
-  }
-});
- $('api-token').addEventListener('keydown', event => {
-  if (event.key === 'Enter') $('api-connect').click();
-});
 
 document.querySelectorAll('.nav').forEach(button => {
   button.addEventListener('click', () => showTab(button.dataset.tab));
@@ -154,7 +93,7 @@ function rangeQuery(){return currentRange.type==='custom'?`start=${encodeURIComp
 function fmtFull(iso){return new Date(iso).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
 async function loadAnalytics(){
   try{
-    const d=await (await apiFetch(`/analytics?${rangeQuery()}`)).json();
+    const d=await (await fetch(`/analytics?${rangeQuery()}`)).json();
     $('metric-total').textContent=d.total;$('metric-flagged').textContent=(d.counts['Suspicious']||0)+(d.counts['High Risk']||0);$('metric-clear').textContent=d.counts['Safe']||0;$('metric-alerts').textContent=d.counts['High Risk'];$('donut-total').textContent=d.total;
     chart($('pulse-chart'),d.series,d.bucket);chart($('analytics-chart'),d.series,d.bucket);setDistribution(d.counts,d.total);
     const windowText=`${fmtFull(d.range_start)} → ${fmtFull(d.range_end)} · bucketed by ${d.bucket}`;
@@ -165,7 +104,7 @@ async function loadAnalytics(){
 async function loadHistory(){
   try{
     const extra=currentRange.type==='custom'?`&start=${encodeURIComponent(currentRange.start)}&end=${encodeURIComponent(currentRange.end)}`:'';
-    const rows=await (await apiFetch(`/history?limit=${currentRange.type==='custom'?100:12}${extra}`)).json();
+    const rows=await (await fetch(`/history?limit=${currentRange.type==='custom'?100:12}${extra}`)).json();
     $('history-list').innerHTML=rows.length?`<div class="table"><div class="tr th"><span>VERDICT</span><span>SIGNALS USED</span><span>RISK SCORE</span><span>TIME</span></div>${rows.map(x=>`<div class="tr"><span><b class="badge ${riskClass(x.verdict)}">${x.verdict}</b></span><span>${x.modules_used.join(' · ')}</span><span>${Math.round(x.risk_score*100)}%</span><span>${fmtFull(x.created_at)}</span></div>`).join('')}</div>`:'No checks in this window. Run a message or QR check in the Android app, or widen the range.'
   }catch{}
 }
@@ -202,4 +141,4 @@ $('applyCustomRange').onclick=()=>{
   loadAnalytics(); if($('history-list'))loadHistory();
 };
 $('refresh-history').onclick=()=>{loadHistory();loadAnalytics()};
-initialiseDashboard();
+loadAnalytics();

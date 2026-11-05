@@ -155,13 +155,10 @@ fun CheckScreen(
 
             OutlinedTextField(
                 value = amount,
-                onValueChange = { input -> amount = input.filter { it.isDigit() || it == '.' } },
+                onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' } },
                 label = { Text("Amount (₹, optional)") },
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (amount.isNotBlank() && amount.toDoubleOrNull() == null) {
-                Text("Enter a valid amount, for example 120.50.", color = androidx.compose.material3.MaterialTheme.colorScheme.error)
-            }
 
             OutlinedTextField(
                 value = recipient,
@@ -169,6 +166,7 @@ fun CheckScreen(
                 label = { Text("Recipient name / UPI ID (optional)") },
                 modifier = Modifier.fillMaxWidth(),
             )
+            Text("A Safe result means no strong warning was found; the app cannot verify who owns a UPI ID.")
 
             Button(
                 onClick = {
@@ -182,8 +180,7 @@ fun CheckScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = state !is CheckUiState.Loading &&
-                    (amount.isBlank() || amount.toDoubleOrNull() != null) &&
-                    (message.isNotBlank() || urlOrQr.isNotBlank() || amount.toDoubleOrNull() != null),
+                    (message.isNotBlank() || urlOrQr.isNotBlank() || amount.isNotBlank()),
             ) {
                 if (state is CheckUiState.Loading) {
                     CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
@@ -192,7 +189,7 @@ fun CheckScreen(
             }
 
             if (state is CheckUiState.Error) {
-                Text("Check failed: ${state.message}. Verify the backend connection; if authentication is required, update the API token in Settings.")
+                Text("Couldn't reach the server: ${state.message}. Check that the backend is running and reachable at the configured API_BASE_URL.")
             }
         }
     }

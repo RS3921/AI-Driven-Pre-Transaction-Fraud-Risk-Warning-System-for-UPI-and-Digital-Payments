@@ -39,18 +39,22 @@ except FileNotFoundError:
 
 
 def analyse_transaction(amount: float | None, recipient: str | None, payments_last_hour: int | None, is_new_recipient: bool | None) -> dict:
-    # NOTE: is_new_recipient is deliberately excluded from this check.
-    # It comes from a checkbox on the frontend, which can only ever send
-    # true or false -- never a genuine "not answered" state -- so
-    # including it here meant this condition was NEVER true (the
-    # transaction module always ran, even with every other field left
-    # blank). With amount=None, the analyzer fell back to amount=0,
-    # which is a value the model never saw in training (every real
-    # transaction has a positive amount) -- an out-of-distribution
-    # input that caused wildly incorrect scores (observed: 0.98, i.e.
-    # near-maximum risk, for a completely empty transaction section).
-    if amount is None and not recipient and payments_last_hour is None:
-        return {"score": None, "reasons": [], "shap_explanation": []}
+    # The PaySim model was trained on transaction behavior, including transfer
+    # amount, recipient novelty, payment frequency, and time. The app's simple
+    # form only collects amount/payee, so scoring those two fields as if they
+    # were behavioral evidence caused false positives for ordinary payments.
+    # Run that model only when at least one behavioral signal was actually
+    # supplied; amount and recipient alone are informational, not fraud cues.
+    has_behavioral_context = payments_last_hour is not None or is_new_recipient is not None
+    if not has_behavioral_context:
+        if amount is None and not recipient:
+            return {"score": None, "reasons": [], "shap_explanation": []}
+        reasons = [
+            "An amount or recipient ID alone does not establish fraud; confirm the payee name in your UPI app before approving."
+        ]
+        if amount is not None and amount >= 10000:
+            reasons.append("Confirm the entered amount carefully before authorizing the payment")
+        return {"score": 0.0, "reasons": reasons, "shap_explanation": []}
 
     amount = amount or 0
     hour_of_day = datetime.now().hour

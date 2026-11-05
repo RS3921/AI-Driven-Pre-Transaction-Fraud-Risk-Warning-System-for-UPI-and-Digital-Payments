@@ -15,7 +15,7 @@ The app is a warning aid. It does not connect to, approve, or block a live UPI p
 
 ## Language review workflow
 
-Read `data/NATIVE_LANGUAGE_DATA_COLLECTION.md`, copy the header in `data/native_language_review_template.csv` to a private `data/native_language_reviewed.csv`, then add only consented, redacted, approved native-speaker examples. Run `python nlp_module/7_evaluate_native_reviewed.py` from the repository root. The evaluator writes aggregate metrics only and does not retrain the model. Aim for at least 100 safe and 100 risky examples, from at least 20 independent source groups in each class, per language. Smaller samples are labeled preliminary.
+Read `upi-fraud-guard-v3/data/NATIVE_LANGUAGE_DATA_COLLECTION.md`, copy the header in `native_language_review_template.csv` to a private `native_language_reviewed.csv`, then add only consented, redacted, approved native-speaker examples. Run `python nlp_module/7_evaluate_native_reviewed.py` from the backend folder. The evaluator writes aggregate metrics only and does not retrain the model. Aim for at least 100 safe and 100 risky examples, from at least 20 independent source groups in each class, per language. Smaller samples are labeled preliminary.
 
 The existing Marathi supplement is machine-translated and must not be described as native-reviewed. More rows alone do not prove better performance; review false alerts and missed scams separately.
 

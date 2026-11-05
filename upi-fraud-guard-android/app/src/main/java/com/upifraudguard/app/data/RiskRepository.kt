@@ -65,14 +65,12 @@ class RiskRepository(
 
     suspend fun check(request: RiskCheckRequest): Result<RiskCheckResponse> = runCatching {
         val response = api().check(request)
-        if (response.code() == 401) error("Authentication required. Check the API token in Settings.")
         if (!response.isSuccessful) error("Server error ${response.code()}: ${response.errorBody()?.string()}")
         response.body() ?: error("Empty response from server")
     }
 
     suspend fun history(limit: Int = 5000): Result<List<HistoryItem>> = runCatching {
         val response = api().history(limit)
-        if (response.code() == 401) error("Authentication required. Check the API token in Settings.")
         if (!response.isSuccessful) error("Server error ${response.code()}")
         response.body() ?: emptyList()
     }

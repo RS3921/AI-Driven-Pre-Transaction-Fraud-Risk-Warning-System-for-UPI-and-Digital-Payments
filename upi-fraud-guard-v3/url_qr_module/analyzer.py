@@ -24,7 +24,7 @@ import joblib
 import pandas as pd
 
 from shap_explainability import explain_prediction
-from url_qr_module.upi_qr import parse_upi_payment_uri
+from url_qr_module.upi_qr import looks_like_upi_vpa, parse_upi_payment_uri, is_valid_upi_vpa
 
 FEATURE_LABELS = {
     "url_length": "Overall link length",
@@ -43,6 +43,10 @@ FEATURE_LABELS = {
 }
 
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.su", "shorturl.at", "cutt.ly", "rb.gy"}
+# The bundled URL model has known false positives on several official payment
+# domains. This small exact-root list is only a classifier correction; it is
+# never used to trust the payee or to suppress clear link red flags.
+KNOWN_PAYMENT_SITE_ROOTS = {"paytm.com", "phonepe.com", "npci.org.in", "bhimupi.org.in", "google.com"}
 SUSPICIOUS_WORDS = {
     "verify", "login", "update", "secure", "kyc", "reward", "claim", "bonus",
     "wallet", "upi", "bank", "account", "password", "gift", "refund", "suspend",
@@ -77,9 +81,12 @@ def analyse_url(value: str) -> dict:
                 "shap_explanation": [],
             }
         reasons.append("UPI payment request QR decoded; the payee identity is not independently verified")
-        if details["flags"]:
-            reasons.extend(details["flags"][:3])
-            score = 0.78 if not details["well_formed"] else 0.42
+        reasons.extend(details["flags"][:3])
+        reasons.extend(details.get("notices", [])[:2])
+        if not details["well_formed"]:
+            score = 0.78
+        elif details["flags"]:
+            score = 0.42
         else:
             score = 0.12
         return {
@@ -87,6 +94,25 @@ def analyse_url(value: str) -> dict:
             "reasons": reasons,
             "kind": "UPI QR payload",
             "upi_qr_details": details,
+            "shap_explanation": [],
+        }
+
+    # A standalone VPA is an account identifier, not a web address. Running
+    # it through the phishing URL model treats its `@` as suspicious URL syntax
+    # and creates false alarms for ordinary, valid UPI IDs. Syntax alone cannot
+    # verify that the ID belongs to the person the user expects.
+    if looks_like_upi_vpa(value):
+        valid_shape = is_valid_upi_vpa(value)
+        reason = (
+            "UPI ID format recognized; this check cannot verify who owns the ID"
+            if valid_shape
+            else "This resembles a UPI ID, but its format could not be confirmed; verify it in your payment app"
+        )
+        return {
+            "score": 0.02,
+            "reasons": [reason],
+            "kind": "UPI ID",
+            "upi_qr_details": None,
             "shap_explanation": [],
         }
 
@@ -113,6 +139,31 @@ def analyse_url(value: str) -> dict:
         reasons.append(f"Link contains sensitive lure words: {', '.join(hits[:3])}")
     if len(value) > 100:
         reasons.append("Link is unusually long")
+
+    root_match = next(
+        (root for root in KNOWN_PAYMENT_SITE_ROOTS if host == root or host.endswith("." + root)),
+        None,
+    )
+    has_clear_link_red_flag = (
+        parsed.scheme != "https"
+        or host in SHORTENERS
+        or bool(re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", host))
+        or "xn--" in host
+        or host.count("-") >= 2
+        or bool(hits)
+        or len(value) > 100
+    )
+    if root_match and not has_clear_link_red_flag:
+        # Do not let a memorized phishing-domain feature override a clean URL
+        # on one of these recognized provider roots. This still cannot prove
+        # that a particular payment request or payee is legitimate.
+        return {
+            "score": 0.08,
+            "reasons": [f"HTTPS link uses the {root_match} domain; this does not verify the payment recipient"],
+            "kind": "URL",
+            "upi_qr_details": None,
+            "shap_explanation": [],
+        }
 
     # --- ML score: the trained model is the actual risk score now ---
     if _url_model is not None:

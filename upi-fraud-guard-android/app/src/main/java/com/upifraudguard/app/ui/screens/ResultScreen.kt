@@ -59,6 +59,7 @@ fun ResultScreen(viewModel: CheckViewModel, onBack: () -> Unit) {
                             )
                             qr.transactionNote?.takeIf(String::isNotBlank)?.let { Text("Payment note: $it") }
                             qr.flags.forEach { flag -> Text("Check: $flag") }
+                            qr.notices.forEach { notice -> Text("Note: $notice") }
                             Text(
                                 "This scan reads the QR fields; it does not verify who owns the UPI ID. Before paying, compare the displayed name and ID with the recipient shown in your payment app.",
                                 fontWeight = FontWeight.Medium,
@@ -67,8 +68,19 @@ fun ResultScreen(viewModel: CheckViewModel, onBack: () -> Unit) {
                     }
                 }
 
-                Text("Why", fontWeight = FontWeight.Bold)
-                result.reasons.forEach { reason -> Text("•  $reason") }
+                if (!result.verdict.equals("Safe", ignoreCase = true)) {
+                    val actionableReasons = result.reasons.filterNot { reason ->
+                        reason.startsWith("UPI ID format recognized", ignoreCase = true) ||
+                            reason.startsWith("An amount or recipient ID alone", ignoreCase = true) ||
+                            reason.startsWith("UPI payment request QR decoded", ignoreCase = true)
+                    }
+                    Text("Why this was flagged", fontWeight = FontWeight.Bold)
+                    if (actionableReasons.isEmpty()) {
+                        Text("The combined score crossed the warning threshold. Review the entered details before paying.")
+                    } else {
+                        actionableReasons.forEach { reason -> Text("•  $reason") }
+                    }
+                }
 
                 result.moduleScores?.let { scores ->
                     Text("Module scores", fontWeight = FontWeight.Bold)

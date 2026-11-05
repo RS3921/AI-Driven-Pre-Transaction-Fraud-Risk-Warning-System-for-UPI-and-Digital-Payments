@@ -126,9 +126,7 @@ def status(): return {"status": "running", "version": "2.6.0", "authentication_r
 
 @app.get("/session")
 def session(user_id: str = Depends(current_user_id)):
-    # Authentication is determined by the request/configuration, not by a
-    # reserved-looking user ID that an administrator could legitimately set.
-    return {"user_id": user_id, "authenticated": authentication_required()}
+    return {"user_id": user_id, "authenticated": user_id != "local-development"}
 
 @app.post("/check")
 def check(payload: RiskCheckRequest, user_id: str = Depends(current_user_id)):

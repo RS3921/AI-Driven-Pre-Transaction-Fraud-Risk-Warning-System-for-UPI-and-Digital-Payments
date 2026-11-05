@@ -3,9 +3,9 @@ Step 1: build a labeled transaction dataset -- "Transaction fraud
 detection" was previously rule-based only ("not ML-trained yet").
 
 WHAT THIS SCRIPT DOES (in plain terms):
-The repository includes the processed PaySim-derived transaction table.
-The raw PaySim CSV is optional and is not committed because it is about
-494 MB. Normal setup reuses the processed table. If it is missing, this script imports data/paysim.csv and maps its
+The project archive includes the processed PaySim-derived transaction
+table and the raw PaySim CSV. Normal setup reuses the processed table.
+If it is missing, this script imports data/paysim.csv and maps its
 columns to the four features used by this project (amount,
 new-recipient flag, recent payment frequency, time of day). Synthetic
 data is only a fallback if neither dataset is available.
@@ -152,7 +152,7 @@ if existing_path.exists() and not force_rebuild:
         raise ValueError(f"{existing_path} is missing required columns: {sorted(expected_columns - set(df.columns))}")
     print(f"Using bundled processed data/transactions_dataset.csv ({len(df):,} rows).")
     if (DATA_DIR / "paysim.csv").exists():
-        print("Raw PaySim data was found at data/paysim.csv; it is not re-imported during normal setup.")
+        print("Raw PaySim data is included at data/paysim.csv; it is not re-imported during normal setup.")
     print("To intentionally rebuild the processed dataset from raw PaySim, set UPI_FRAUD_GUARD_REBUILD_TRANSACTIONS=1 before python setup.py.")
 else:
     df = load_real_paysim_data()

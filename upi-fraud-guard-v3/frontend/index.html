@@ -1,17 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UPI Fraud Guard</title><link rel="stylesheet" href="style.css"></head><body>
 <header class="topbar"><div class="topbar-brand"><b>◈</b><div><div class="topbar-name"><span>UPI</span><strong>FRAUD GUARD</strong><span class="live-badge"><i></i>LIVE</span></div><p>Real-time pre-payment protection · Local-first prototype</p></div></div><nav class="topbar-nav"><button class="nav active" data-tab="overview">Overview</button><button class="nav" data-tab="analytics">Analytics</button><button class="icon-btn" title="Open developer API" onclick="window.open('/api-docs','_blank')">Docs ↗</button></nav></header>
 <main>
-<section id="api-auth-gate" class="panel api-auth-gate" hidden>
-  <p class="eyebrow">AUTHENTICATED DASHBOARD</p>
-  <h2>Connect with your API token</h2>
-  <p>This backend requires a per-user token. It is kept in this page's memory and sent only to this same API origin.</p>
-  <div class="api-auth-form">
-    <label for="api-token">API access token</label>
-    <input id="api-token" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the token issued for your user">
-    <button id="api-connect" class="text-btn primary">Connect</button>
-  </div>
-  <p id="api-auth-message" class="api-auth-message" role="status" aria-live="polite"></p>
-</section>
 <section id="overview" class="tab active">
 <div class="metrics"><article>
 <span>◌</span><p>Total checks</p><b id="metric-total">0</b><small>all local audit records</small></article><article><span>▲</span><p>Flagged</p><b id="metric-flagged">0</b><small>suspicious + high risk</small></article><article><span>✓</span><p>Clear</p><b id="metric-clear">0</b><small>no fraud pattern found</small></article><article><span>!</span><p>High-risk alerts</p><b id="metric-alerts">0</b><small>require careful review</small></article></div>

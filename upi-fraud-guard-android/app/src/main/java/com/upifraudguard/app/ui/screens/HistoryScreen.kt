@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,17 +37,6 @@ fun HistoryScreen(viewModel: CheckViewModel, selectedMessage: String? = null) {
             modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            if (viewModel.isHistoryLoading && viewModel.history.isEmpty()) {
-                item { CircularProgressIndicator() }
-            }
-            viewModel.historyError?.let { error ->
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Couldn't load history: $error", color = MaterialTheme.colorScheme.error)
-                        TextButton(onClick = viewModel::loadHistory) { Text("Try again") }
-                    }
-                }
-            }
             if (selected != null) {
                 item { HistoryCard(selected, highlighted = true) }
                 item { Text("Other recent checks", fontWeight = FontWeight.Bold) }
@@ -57,9 +44,7 @@ fun HistoryScreen(viewModel: CheckViewModel, selectedMessage: String? = null) {
             items(viewModel.history.filterNot { it == selected }) { item ->
                 HistoryCard(item)
             }
-            if (viewModel.history.isEmpty() && !viewModel.isHistoryLoading && viewModel.historyError == null) {
-                item { Text("No checks in the last 30 days.") }
-            }
+            if (viewModel.history.isEmpty()) item { Text("No checks in the last 30 days.") }
         }
     }
 }

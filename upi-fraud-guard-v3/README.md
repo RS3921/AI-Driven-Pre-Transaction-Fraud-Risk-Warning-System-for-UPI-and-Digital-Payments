@@ -22,6 +22,8 @@ independent signals into one final verdict:
 - **Link and QR payload analysis:** transparent checks for shortened links, raw IP hosts, non-HTTPS URLs, risky lure words, and UPI payment payloads.
 - **Transaction signals:** amount, new-recipient, frequency and time-of-day indicators.
 
+Standalone `name@handle` values are recognized as UPI IDs and are not passed to the URL phishing model. The PaySim transaction model is used only when behavioral inputs (new-recipient status or recent payment count) are supplied; an amount/payee by itself is not fraud evidence. A small set of official payment website roots has a false-positive correction for clean HTTPS links. These checks do not authenticate the recipient or prove a payment link is safe; compare the payee shown by the UPI app before authorizing payment.
+
 The browser demo includes a responsive payment-check workspace, explanation of every verdict, per-module scores, and an SQLite-backed local audit trail.
 
 ## Run the demo
@@ -51,7 +53,7 @@ original `/check-message` route is retained for compatibility.
 
 ## Evaluate multilingual message checks
 
-From the repository root, run `python nlp_module/4_evaluate_multilingual.py` for the balanced 60-example regression smoke set, `python nlp_module/5_evaluate_external_holdout.py` for the separate 7,636-row public English/Hindi/Hinglish test split, and `python nlp_module/6_evaluate_marathi_translation_holdout.py` for the 938-row source-grouped machine-translated Marathi holdout. They write per-language counts and metrics under `models/`. The translated set improved Marathi transfer in this model, but it is not native-speaker-reviewed and is not an estimate of natural UPI-message accuracy. The public holdout has just 11 Hindi risky messages and no Marathi examples.
+From this `upi-fraud-guard-v3` folder, run `python nlp_module/4_evaluate_multilingual.py` for the balanced 60-example regression smoke set, `python nlp_module/5_evaluate_external_holdout.py` for the separate 7,636-row public English/Hindi/Hinglish test split, and `python nlp_module/6_evaluate_marathi_translation_holdout.py` for the 938-row source-grouped machine-translated Marathi holdout. They write per-language counts and metrics under `models/`. The translated set improved Marathi transfer in this model, but it is not native-speaker-reviewed and is not an estimate of natural UPI-message accuracy. The public holdout has just 11 Hindi risky messages and no Marathi examples.
 
 ### Add consented native-language evaluation rows
 
@@ -80,18 +82,15 @@ python run_api.py
 
 Run the token-generation command first and paste its output into the API-users JSON value before launching the server. Configure one unique token per user, keep the JSON in a private environment/secret manager, and never commit real tokens or private keys. Enter the HTTPS base URL and that user's token in Android **Settings**. The user's API token scopes their history; the existing Google Authenticator profile remains local and does not verify email ownership or perform self-service account registration. A production service still needs deployment hardening, protected secret storage, key rotation/revocation operations, monitoring, and review of privacy/legal requirements. Legacy rows from unauthenticated development mode remain under `local-development` and are not shared with token users.
 
-When authentication is enabled, the browser dashboard asks for a per-user API token before loading history or analytics. It keeps the token in page memory and clears it when the page closes. Local loopback development mode does not prompt for a token.
-
 ## Transaction dataset and raw PaySim CSV
 
-The repository includes the processed `data/transactions_dataset.csv` with
+This archive includes the processed `data/transactions_dataset.csv` with
 268,213 rows (260,000 normal and 8,213 fraud-labelled) and the trained
 `models/transaction_model.joblib`. The model training script reads that
 processed CSV. The project metadata and generator describe it as PaySim-derived.
-The original raw `data/paysim.csv` (about 494 MB uncompressed) is intentionally
-excluded from Git.
+The original raw `data/paysim.csv` (about 494 MB uncompressed) is included in this ZIP. It is only re-read when you explicitly rebuild the processed dataset.
 
-During normal `python setup.py`, the generator reuses the processed CSV. To rebuild from raw, obtain `paysim.csv` separately, place it in `data/`, and set `UPI_FRAUD_GUARD_REBUILD_TRANSACTIONS=1`. See `data/TRANSACTION_DATA_README.md`.
+During normal `python setup.py`, the generator reuses the bundled processed CSV and reports that the raw source is included. The setup pipeline continues to train the transaction model from the processed data. You do not need to download or insert `paysim.csv` after extraction. To rebuild from raw, set `UPI_FRAUD_GUARD_REBUILD_TRANSACTIONS=1`. See `data/TRANSACTION_DATA_README.md`.
 
 ## Important prototype boundary
 
@@ -99,7 +98,10 @@ Message, URL, and transaction scoring use the packaged models with additional
 rules for explanations and UPI payment payloads. The system is decision support;
 it should not automatically approve or block a real payment. The transaction
 model is based on engineered features in PaySim-derived data, not on a live
-bank/UPI transaction stream.
+bank/UPI transaction stream. Amounts and payee IDs entered in the form alone
+cannot establish fraud; behavior-based model scoring requires those additional
+behavioral inputs. UPI ID format and known website-domain matching are not
+identity or merchant verification.
 
 ## Setup (do this once)
 
@@ -149,7 +151,7 @@ Copy the error text and share it -- it's usually a missing package or a Python v
 ## Current model and data status
 
 - The API uses the packaged message, URL, and transaction model artifacts. Rules provide additional explanations and handle UPI URI payloads.
-- The transaction model is trained from `data/transactions_dataset.csv`, the included processed PaySim-derived dataset (268,213 rows: 260,000 normal and 8,213 fraud-labelled). The raw `data/paysim.csv` is excluded from Git and is only read if you obtain it separately and explicitly regenerate the processed CSV.
-- During normal setup the generator reuses the processed CSV. See `data/TRANSACTION_DATA_README.md`.
+- The transaction model is trained from `data/transactions_dataset.csv`, the included processed PaySim-derived dataset (268,213 rows: 260,000 normal and 8,213 fraud-labelled). The raw `data/paysim.csv` is included in this ZIP; it is only re-read when you explicitly regenerate the processed CSV.
+- During normal setup the generator reports that it is reusing the processed CSV and that the raw source is included. The pipeline continues training from the processed data. See `data/TRANSACTION_DATA_README.md`.
 - Packaged metrics are evaluation snapshots, not guarantees for production or new messages. The transaction metric snapshot has precision 0.186, recall 0.6184, F1 0.286, and ROC-AUC 0.8408. Consult each JSON file and data notes for test-set limitations.
 - The system is advisory and does not connect to, approve, or block live UPI payments. Keep local development mode loopback-only; use provisioned per-user tokens and HTTPS for network access.

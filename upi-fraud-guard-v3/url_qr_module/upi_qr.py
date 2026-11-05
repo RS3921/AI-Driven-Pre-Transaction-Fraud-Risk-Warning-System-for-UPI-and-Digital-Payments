@@ -8,6 +8,22 @@ from urllib.parse import parse_qsl, urlparse
 _VPA = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,255}@[A-Za-z][A-Za-z0-9.-]{1,62}$")
 
 
+def is_valid_upi_vpa(value: str) -> bool:
+    """Check the basic shape of a VPA without claiming the account exists."""
+    return bool(_VPA.fullmatch((value or "").strip()))
+
+
+def looks_like_upi_vpa(value: str) -> bool:
+    """Recognize a standalone `name@handle` so it is not scored as a website."""
+    candidate = (value or "").strip()
+    return (
+        "@" in candidate
+        and candidate.count("@") == 1
+        and not any(char.isspace() for char in candidate)
+        and not any(char in candidate for char in "/\\?#:")
+    )
+
+
 def parse_upi_payment_uri(value: str) -> dict | None:
     """Return display-safe payment fields for a UPI `upi://pay` URI.
 
@@ -30,6 +46,7 @@ def parse_upi_payment_uri(value: str) -> dict | None:
     raw_currency = params.get("cu", "")
     currency = raw_currency.upper() if raw_currency else "INR"
     flags: list[str] = []
+    notices: list[str] = []
     amount: str | None = None
     amount_value: Decimal | None = None
 
@@ -39,7 +56,7 @@ def parse_upi_payment_uri(value: str) -> dict | None:
 
     if not vpa:
         flags.append("Required payee UPI ID (pa) is missing")
-    elif not _VPA.fullmatch(vpa):
+    elif not is_valid_upi_vpa(vpa):
         flags.append("Payee UPI ID has an unusual format")
     # UPI clients do not all include a payee display name in static codes.
     # Its absence is informational, not evidence that a QR is fraudulent.
@@ -66,7 +83,7 @@ def parse_upi_payment_uri(value: str) -> dict | None:
     # the UI without raising the risk score just for that omission.
 
     if amount_value is not None and amount_value >= Decimal("10000"):
-        flags.append("Requested amount is ₹10,000 or more; verify it carefully")
+        notices.append("Requested amount is ₹10,000 or more; confirm the amount before approving. Amount alone is not evidence of fraud.")
 
     return {
         "payee_vpa": vpa or None,
@@ -78,6 +95,7 @@ def parse_upi_payment_uri(value: str) -> dict | None:
         "transaction_note": params.get("tn") or None,
         "reference_id": params.get("tr") or params.get("tid") or None,
         "flags": flags,
+        "notices": notices,
         "well_formed": bool(vpa) and not any(
             marker in flag.lower()
             for flag in flags

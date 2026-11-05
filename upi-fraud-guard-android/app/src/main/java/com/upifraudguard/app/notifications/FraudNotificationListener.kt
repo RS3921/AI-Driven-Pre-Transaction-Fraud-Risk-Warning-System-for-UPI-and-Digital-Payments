@@ -3,7 +3,6 @@ package com.upifraudguard.app.notifications
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.util.Base64
 import com.upifraudguard.app.data.BackendUrlStore
 import com.upifraudguard.app.data.ApiTokenStore
 import com.upifraudguard.app.data.RiskCheckRequest
@@ -13,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.security.MessageDigest
 import java.util.Locale
 
 /**
@@ -54,13 +52,7 @@ class FraudNotificationListener : NotificationListenerService() {
         // Avoid rescoring identical notification updates, without dropping
         // later messages that share the same Telegram notification ID.
         val normalizedText = text.lowercase(Locale.ROOT).replace(Regex("\\s+"), " ").trim()
-        val textDigest = MessageDigest.getInstance("SHA-256")
-            .digest(normalizedText.toByteArray(Charsets.UTF_8))
-        val digestKey = Base64.encodeToString(
-            textDigest,
-            Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING,
-        )
-        val key = "${sbn.packageName}:${sbn.id}:$digestKey"
+        val key = "${sbn.packageName}:${sbn.id}:${normalizedText.hashCode()}"
         val now = System.currentTimeMillis()
         synchronized(recentCandidates) {
             val expiredBefore = now - DEDUP_WINDOW_MS

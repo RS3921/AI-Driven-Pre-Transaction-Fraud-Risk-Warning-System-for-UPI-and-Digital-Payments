@@ -12,8 +12,8 @@ android {
         applicationId = "com.upifraudguard.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.4.0"
+        versionCode = 5
+        versionName = "0.5.0"
         // Emulator-only local-development endpoint. A deployed/physical-phone
         // build should use a trusted HTTPS hostname and per-user API token.
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/\"")

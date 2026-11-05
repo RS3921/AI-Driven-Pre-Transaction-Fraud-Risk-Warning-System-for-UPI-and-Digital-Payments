@@ -26,12 +26,6 @@ class CheckViewModel(private val repository: RiskRepository = RiskRepository()) 
     var history: List<HistoryItem> by mutableStateOf(emptyList())
         private set
 
-    var isHistoryLoading: Boolean by mutableStateOf(false)
-        private set
-
-    var historyError: String? by mutableStateOf(null)
-        private set
-
     fun runCheck(
         message: String,
         urlOrQr: String,
@@ -58,13 +52,7 @@ class CheckViewModel(private val repository: RiskRepository = RiskRepository()) 
 
     fun loadHistory() {
         viewModelScope.launch {
-            isHistoryLoading = true
-            historyError = null
-            repository.history().fold(
-                onSuccess = { history = it },
-                onFailure = { historyError = it.message ?: "Couldn't load risk history." },
-            )
-            isHistoryLoading = false
+            repository.history().onSuccess { history = it }
         }
     }
 

@@ -1,7 +1,7 @@
 # UPI Fraud Guard — Android
 
 A Kotlin/Jetpack Compose Android client for the existing UPI Fraud Guard
-backend (`../api/main.py`). This does **not** replace the
+backend (`upi-fraud-guard-v3/api/main.py`). This does **not** replace the
 Python backend or its three ML modules — it's a new front door aimed at an
 individual user, in place of the browser demo, so the risk check fits into
 the moment right before someone pays.
@@ -100,7 +100,7 @@ OTPs or PINs.
 
 1. **Start the existing backend** from the zip:
    ```
-   cd ..
+   cd upi-fraud-guard-v3
    pip install -r requirements.txt
    python setup.py
    python run_api.py

@@ -56,6 +56,7 @@ data class UpiQrDetails(
     @SerializedName("transaction_note") val transactionNote: String? = null,
     @SerializedName("reference_id") val referenceId: String? = null,
     val flags: List<String> = emptyList(),
+    val notices: List<String> = emptyList(),
     @SerializedName("well_formed") val wellFormed: Boolean = false,
 )
 
