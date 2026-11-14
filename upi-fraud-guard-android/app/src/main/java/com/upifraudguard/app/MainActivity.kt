@@ -9,18 +9,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.upifraudguard.app.data.BackendUrlStore
 import com.upifraudguard.app.data.ApiTokenStore
+import com.upifraudguard.app.data.BackendUrlStore
+import com.upifraudguard.app.data.LocalProfileStore
 import com.upifraudguard.app.data.RiskRepository
 import com.upifraudguard.app.ui.CheckViewModel
 import com.upifraudguard.app.ui.CheckViewModelFactory
-import com.upifraudguard.app.data.LocalProfileStore
 import com.upifraudguard.app.ui.screens.AccountScreen
-import com.upifraudguard.app.ui.screens.CheckScreen
-import com.upifraudguard.app.ui.screens.HistoryScreen
+import com.upifraudguard.app.ui.screens.MainTab
+import com.upifraudguard.app.ui.screens.MainTabContainer
+import com.upifraudguard.app.ui.screens.OnboardingScreen
 import com.upifraudguard.app.ui.screens.QrScanScreen
 import com.upifraudguard.app.ui.screens.ResultScreen
-import com.upifraudguard.app.ui.screens.SettingsScreen
 import com.upifraudguard.app.ui.theme.UpiFraudGuardTheme
 
 class MainActivity : ComponentActivity() {
@@ -54,11 +54,10 @@ class MainActivity : ComponentActivity() {
 
 private object Routes {
     const val ACCOUNT = "account"
-    const val CHECK = "check"
+    const val ONBOARDING = "onboarding"
+    const val MAIN = "main"
     const val SCAN = "scan"
     const val RESULT = "result"
-    const val HISTORY = "history"
-    const val SETTINGS = "settings"
 }
 
 @Composable
@@ -69,28 +68,45 @@ fun UpiFraudGuardApp(
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
+
     val startDestination = when {
-        openHistory -> Routes.HISTORY
-        LocalProfileStore.hasProfile(context) -> Routes.CHECK
-        else -> Routes.ACCOUNT
+        !LocalProfileStore.hasProfile(context) -> Routes.ACCOUNT
+        !LocalProfileStore.hasCompletedOnboarding(context) -> Routes.ONBOARDING
+        else -> Routes.MAIN
     }
+
+    val initialTab = if (openHistory) MainTab.HISTORY else MainTab.HOME
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.ACCOUNT) {
             AccountScreen(onAccountCreated = {
-                navController.navigate(Routes.CHECK) {
+                navController.navigate(Routes.ONBOARDING) {
                     popUpTo(Routes.ACCOUNT) { inclusive = true }
                     launchSingleTop = true
                 }
             })
         }
-        composable(Routes.CHECK) {
-            CheckScreen(
+        composable(Routes.ONBOARDING) {
+            OnboardingScreen(onCompleted = {
+                navController.navigate(Routes.MAIN) {
+                    popUpTo(Routes.ONBOARDING) { inclusive = true }
+                    launchSingleTop = true
+                }
+            })
+        }
+        composable(Routes.MAIN) {
+            MainTabContainer(
                 viewModel = viewModel,
-                onScanQr = { navController.navigate(Routes.SCAN) },
-                onOpenHistory = { navController.navigate(Routes.HISTORY) },
-                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                onResult = { navController.navigate(Routes.RESULT) },
+                initialTab = initialTab,
+                selectedHistoryMessage = selectedHistoryMessage,
+                onOpenScanScreen = { navController.navigate(Routes.SCAN) },
+                onOpenResultScreen = { navController.navigate(Routes.RESULT) },
+                onLoggedOut = {
+                    navController.navigate(Routes.ACCOUNT) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
             )
         }
         composable(Routes.SCAN) {
@@ -109,13 +125,10 @@ fun UpiFraudGuardApp(
             )
         }
         composable(Routes.RESULT) {
-            ResultScreen(viewModel = viewModel, onBack = { navController.popBackStack(Routes.CHECK, false) })
-        }
-        composable(Routes.HISTORY) {
-            HistoryScreen(viewModel = viewModel, selectedMessage = selectedHistoryMessage)
-        }
-        composable(Routes.SETTINGS) {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            ResultScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }

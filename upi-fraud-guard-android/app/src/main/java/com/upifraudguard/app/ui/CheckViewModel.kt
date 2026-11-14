@@ -23,6 +23,9 @@ class CheckViewModel(private val repository: RiskRepository = RiskRepository()) 
     var uiState: CheckUiState by mutableStateOf(CheckUiState.Idle)
         private set
 
+    var currentResult: RiskCheckResponse? by mutableStateOf(null)
+        private set
+
     var history: List<HistoryItem> by mutableStateOf(emptyList())
         private set
 
@@ -44,10 +47,17 @@ class CheckViewModel(private val repository: RiskRepository = RiskRepository()) 
                 isNewRecipient = isNewRecipient,
             )
             repository.check(request).fold(
-                onSuccess = { uiState = CheckUiState.Success(it) },
+                onSuccess = {
+                    currentResult = it
+                    uiState = CheckUiState.Success(it)
+                },
                 onFailure = { uiState = CheckUiState.Error(it.message ?: "Something went wrong") },
             )
         }
+    }
+
+    fun consumeResult() {
+        uiState = CheckUiState.Idle
     }
 
     fun loadHistory() {
@@ -58,5 +68,6 @@ class CheckViewModel(private val repository: RiskRepository = RiskRepository()) 
 
     fun reset() {
         uiState = CheckUiState.Idle
+        currentResult = null
     }
 }

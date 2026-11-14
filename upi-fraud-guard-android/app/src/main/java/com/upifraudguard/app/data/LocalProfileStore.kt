@@ -17,9 +17,27 @@ object LocalProfileStore {
     private const val VERIFIED = "authenticator_verified"
     private const val TOTP_SECRET = "totp_secret_encrypted"
 
+    private const val ONBOARDING_COMPLETED = "onboarding_completed"
+
     fun hasProfile(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return prefs.getBoolean(VERIFIED, false) && !prefs.getString(EMAIL, null).isNullOrBlank()
+    }
+
+    fun hasCompletedOnboarding(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(ONBOARDING_COMPLETED, false)
+    }
+
+    fun setOnboardingCompleted(context: Context, completed: Boolean = true) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(ONBOARDING_COMPLETED, completed).apply()
+    }
+
+    fun getName(context: Context): String {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(NAME, "") ?: ""
+    }
+
+    fun getEmail(context: Context): String {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(EMAIL, "") ?: ""
     }
 
     fun save(context: Context, name: String, email: String, secret: String) {
@@ -31,6 +49,10 @@ object LocalProfileStore {
             .putString(TOTP_SECRET, encryptedSecret)
             .putBoolean(VERIFIED, true)
             .apply()
+    }
+
+    fun clear(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
     }
 
     private fun encrypt(value: String): String {

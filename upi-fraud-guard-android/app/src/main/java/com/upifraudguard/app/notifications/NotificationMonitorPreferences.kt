@@ -27,9 +27,9 @@ object NotificationMonitorPreferences {
         Settings(
             enabled = prefs.getBoolean(ENABLED, true),
             telegram = prefs.getBoolean(TELEGRAM, true),
-            whatsapp = prefs.getBoolean(WHATSAPP, false),
+            whatsapp = prefs.getBoolean(WHATSAPP, true),
             messages = prefs.getBoolean(MESSAGES, true),
-            otherApps = prefs.getBoolean(OTHER_APPS, false),
+            otherApps = prefs.getBoolean(OTHER_APPS, true),
         )
     }
 

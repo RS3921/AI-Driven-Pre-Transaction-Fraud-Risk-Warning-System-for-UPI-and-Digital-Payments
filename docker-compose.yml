@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  upi-fraud-guard-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: upi_fraud_guard_api
+    ports:
+      - "8000:8000"
+    environment:
+      - UPI_FRAUD_GUARD_HOST=0.0.0.0
+      - UPI_FRAUD_GUARD_PORT=8000
+    volumes:
+      - ./upi-fraud-guard-v3/data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/status')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

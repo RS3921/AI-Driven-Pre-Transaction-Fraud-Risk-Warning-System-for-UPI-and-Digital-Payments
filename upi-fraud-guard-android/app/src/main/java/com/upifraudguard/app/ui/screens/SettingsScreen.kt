@@ -35,13 +35,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.upifraudguard.app.data.BackendUrlStore
 import com.upifraudguard.app.data.ApiTokenStore
+import com.upifraudguard.app.data.LocalProfileStore
 import com.upifraudguard.app.data.RiskRepository
 import com.upifraudguard.app.notifications.NotificationMonitorPreferences
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onLoggedOut: () -> Unit = {}) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var backendUrl by remember { mutableStateOf(BackendUrlStore.get(context)) }
@@ -52,6 +53,7 @@ fun SettingsScreen(onBack: () -> Unit) {
     var monitorSettings by remember { mutableStateOf(NotificationMonitorPreferences.read(context)) }
     var backgroundStatus by remember { mutableStateOf(NotificationMonitorPreferences.backendStateLabel(context)) }
     var showDeleteHistoryDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     fun updateMonitorSettings(transform: (NotificationMonitorPreferences.Settings) -> NotificationMonitorPreferences.Settings) {
         NotificationMonitorPreferences.update(context, transform)
@@ -194,6 +196,19 @@ fun SettingsScreen(onBack: () -> Unit) {
                 enabled = !isChecking,
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Delete my saved history") }
+
+            Text("Local profile", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+            val profileName = remember { LocalProfileStore.getName(context) }
+            val profileEmail = remember { LocalProfileStore.getEmail(context) }
+            if (profileName.isNotBlank() || profileEmail.isNotBlank()) {
+                Text("Profile: $profileName ($profileEmail)")
+            }
+            Text("Logging out clears your local profile, 2FA setup key, and API access token from this phone.")
+            OutlinedButton(
+                onClick = { showLogoutDialog = true },
+                enabled = !isChecking,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Log out of local profile") }
         }
     }
 
@@ -227,6 +242,25 @@ fun SettingsScreen(onBack: () -> Unit) {
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteHistoryDialog = false }) { Text("Cancel") }
+            },
+        )
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Log out?") },
+            text = { Text("This permanently removes your local profile, 2FA secret key, and saved API token from this device. You will need to set up a profile again.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    LocalProfileStore.clear(context)
+                    ApiTokenStore.clear(context)
+                    onLoggedOut()
+                }) { Text("Log out", color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) { Text("Cancel") }
             },
         )
     }

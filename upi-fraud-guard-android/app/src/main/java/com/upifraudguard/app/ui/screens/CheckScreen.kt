@@ -76,20 +76,23 @@ fun CheckScreen(
     val state = viewModel.uiState
     LaunchedEffect(state) {
         if (state is CheckUiState.Success) {
-            if (state.result.verdict != "Safe") {
+            val res = state.result
+            if (res.verdict != "Safe") {
                 if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(
                         context,
                         Manifest.permission.POST_NOTIFICATIONS,
                     ) != PackageManager.PERMISSION_GRANTED
                 ) {
-                    pendingWarning = state.result
+                    pendingWarning = res
                     requestWarningPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
-                    RiskWarningNotifications.show(context, state.result)
+                    RiskWarningNotifications.show(context, res)
                     onResult()
+                    viewModel.consumeResult()
                 }
             } else {
                 onResult()
+                viewModel.consumeResult()
             }
         }
     }

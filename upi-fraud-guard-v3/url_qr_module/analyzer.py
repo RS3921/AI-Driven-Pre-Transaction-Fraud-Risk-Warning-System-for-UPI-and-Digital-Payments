@@ -1,17 +1,6 @@
 """Local URL and QR-payload risk checks for the prototype.
 
-Now model-backed: the risk score for a plain URL comes from a Random
-Forest classifier trained on real phishing/legitimate URL data (see
-train_model.py). The rule-based checks below are KEPT and still run --
-they no longer set the score, but they generate the plain-language
-"reasons" shown to the user, so the score is model-driven while the
-explanation stays transparent and readable (a lightweight stand-in for
-the SHAP-based explainability engine noted as a later phase in the
-README, without needing that dependency yet).
-
-UPI QR payloads (upi://...) aren't URLs at all -- they're structured
-payment requests -- so those keep their own dedicated rule-based scoring
-below; the ML model is specifically for http(s) links.
+ML-backed for URLs; rule-based for UPI payloads; integrated with CTI threat indicators.
 """
 from __future__ import annotations
 
@@ -25,6 +14,7 @@ import pandas as pd
 
 from shap_explainability import explain_prediction
 from url_qr_module.upi_qr import looks_like_upi_vpa, parse_upi_payment_uri, is_valid_upi_vpa
+from cti_matcher import cti_matcher
 
 FEATURE_LABELS = {
     "url_length": "Overall link length",
@@ -43,9 +33,6 @@ FEATURE_LABELS = {
 }
 
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.su", "shorturl.at", "cutt.ly", "rb.gy"}
-# The bundled URL model has known false positives on several official payment
-# domains. This small exact-root list is only a classifier correction; it is
-# never used to trust the payee or to suppress clear link red flags.
 KNOWN_PAYMENT_SITE_ROOTS = {"paytm.com", "phonepe.com", "npci.org.in", "bhimupi.org.in", "google.com"}
 SUSPICIOUS_WORDS = {
     "verify", "login", "update", "secure", "kyc", "reward", "claim", "bonus",
@@ -60,7 +47,7 @@ from url_features import extract_features, FEATURE_NAMES  # noqa: E402
 try:
     _url_model = joblib.load(_MODELS_DIR / "url_model.joblib")
 except FileNotFoundError:
-    _url_model = None  # falls back to a rule-based score below until `python setup.py` is run
+    _url_model = None
 
 
 def analyse_url(value: str) -> dict:
@@ -69,6 +56,9 @@ def analyse_url(value: str) -> dict:
     reasons: list[str] = []
     if not value:
         return {"score": None, "reasons": [], "kind": None, "shap_explanation": []}
+
+    # Query CTI Intelligence Engine
+    cti_match = cti_matcher.match_url_or_domain(value)
 
     if value.lower().startswith("upi://"):
         details = parse_upi_payment_uri(value)
@@ -83,97 +73,84 @@ def analyse_url(value: str) -> dict:
         reasons.append("UPI payment request QR decoded; the payee identity is not independently verified")
         reasons.extend(details["flags"][:3])
         reasons.extend(details.get("notices", [])[:2])
-        if not details["well_formed"]:
+
+        # Check VPA in CTI Threat Database
+        vpa_cti_match = cti_matcher.match_vpa(details.get("payee_vpa") or "")
+        if vpa_cti_match:
+            reasons.append(f"CRITICAL: Payee VPA '{details.get('payee_vpa')}' is listed in Verified CTI Threat Database ({vpa_cti_match['source_name']})")
+            score = 0.95
+        elif not details["well_formed"]:
             score = 0.78
         elif details["flags"]:
             score = 0.42
         else:
             score = 0.12
-        return {
+
+        result_dict = {
             "score": score,
             "reasons": reasons,
             "kind": "UPI QR payload",
             "upi_qr_details": details,
             "shap_explanation": [],
         }
+        if vpa_cti_match:
+            result_dict["cti_match"] = vpa_cti_match
+        return result_dict
 
-    # A standalone VPA is an account identifier, not a web address. Running
-    # it through the phishing URL model treats its `@` as suspicious URL syntax
-    # and creates false alarms for ordinary, valid UPI IDs. Syntax alone cannot
-    # verify that the ID belongs to the person the user expects.
     if looks_like_upi_vpa(value):
         valid_shape = is_valid_upi_vpa(value)
-        reason = (
-            "UPI ID format recognized; this check cannot verify who owns the ID"
-            if valid_shape
-            else "This resembles a UPI ID, but its format could not be confirmed; verify it in your payment app"
-        )
-        return {
-            "score": 0.02,
+        vpa_cti_match = cti_matcher.match_vpa(value)
+        if vpa_cti_match:
+            reason = f"CRITICAL: UPI ID '{value}' matches verified malicious indicator in {vpa_cti_match['source_name']}"
+            score = 0.92
+        else:
+            reason = (
+                "UPI ID format recognized; this check cannot verify who owns the ID"
+                if valid_shape
+                else "This resembles a UPI ID, but its format could not be confirmed; verify it in your payment app"
+            )
+            score = 0.02
+
+        res = {
+            "score": score,
             "reasons": [reason],
             "kind": "UPI ID",
             "upi_qr_details": None,
             "shap_explanation": [],
         }
+        if vpa_cti_match:
+            res["cti_match"] = vpa_cti_match
+        return res
 
-    candidate = value if "://" in value else f"https://{value}"
-    parsed = urlparse(candidate)
-    host = (parsed.hostname or "").lower()
-    path = f"{parsed.path}?{parsed.query}".lower()
-    if not host:
-        return {"score": 0.72, "reasons": ["Link format is invalid or missing a host"], "kind": "URL", "upi_qr_details": None, "shap_explanation": []}
+    # Upgrade URL evaluation with Adaptive URL Intelligence Engine (AUIE)
+    from url_qr_module.auie_engine import auie_engine
 
-    # --- Rule-based checks: kept as-is, but now feed only the "reasons" ---
-    if parsed.scheme != "https":
-        reasons.append("Link does not use HTTPS")
-    if host in SHORTENERS:
-        reasons.append("Shortened link hides its final destination")
-    if re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", host):
-        reasons.append("Link uses a raw IP address instead of a domain")
-    if "xn--" in host:
-        reasons.append("Domain uses internationalised characters")
-    if host.count("-") >= 2 or host.count(".") >= 3:
-        reasons.append("Domain structure is unusually complex")
-    hits = sorted(word for word in SUSPICIOUS_WORDS if word in f"{host}{path}")
-    if hits:
-        reasons.append(f"Link contains sensitive lure words: {', '.join(hits[:3])}")
-    if len(value) > 100:
-        reasons.append("Link is unusually long")
+    auie_res = auie_engine.evaluate_url(value)
+    candidate = auie_res["canonical_url"] or (value if "://" in value else f"https://{value}")
 
-    root_match = next(
-        (root for root in KNOWN_PAYMENT_SITE_ROOTS if host == root or host.endswith("." + root)),
-        None,
-    )
-    has_clear_link_red_flag = (
-        parsed.scheme != "https"
-        or host in SHORTENERS
-        or bool(re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", host))
-        or "xn--" in host
-        or host.count("-") >= 2
-        or bool(hits)
-        or len(value) > 100
-    )
-    if root_match and not has_clear_link_red_flag:
-        # Do not let a memorized phishing-domain feature override a clean URL
-        # on one of these recognized provider roots. This still cannot prove
-        # that a particular payment request or payee is legitimate.
-        return {
-            "score": 0.08,
-            "reasons": [f"HTTPS link uses the {root_match} domain; this does not verify the payment recipient"],
-            "kind": "URL",
-            "upi_qr_details": None,
-            "shap_explanation": [],
-        }
+    # Compute SHAP explainability if url_model is loaded
+    shap_explanation = []
+    if _url_model is not None and auie_res["domain"]:
+        try:
+            row = pd.DataFrame([extract_features(candidate)])[FEATURE_NAMES]
+            shap_explanation = explain_prediction("url_model.joblib", row, FEATURE_LABELS)
+        except Exception:
+            shap_explanation = []
 
-    # --- ML score: the trained model is the actual risk score now ---
-    if _url_model is not None:
-        row = pd.DataFrame([extract_features(candidate)])[FEATURE_NAMES]
-        score = float(_url_model.predict_proba(row)[0][1])
-        shap_explanation = explain_prediction("url_model.joblib", row, FEATURE_LABELS)
-    else:
-        score = min(0.98, 0.04 + 0.15 * len(reasons))  # fallback if model not yet trained
-        shap_explanation = []
-
-    if not reasons:
-        reasons.append("No high-risk URL structure was detected")
-    return {"score": round(min(score, 0.99), 3), "reasons": reasons, "kind": "URL", "upi_qr_details": None, "shap_explanation": shap_explanation}
+    out_res = {
+        "score": auie_res["risk_score"],
+        "reasons": auie_res["reasons"],
+        "kind": "URL",
+        "reputation_state": auie_res["reputation_state"],
+        "confidence_score": auie_res["confidence_score"],
+        "canonical_url": auie_res["canonical_url"],
+        "domain": auie_res["domain"],
+        "sources_evidence": auie_res["sources_evidence"],
+        "conflicting_evidence": auie_res["conflicting_evidence"],
+        "providers_consulted": auie_res["providers_consulted"],
+        "upi_qr_details": None,
+        "shap_explanation": shap_explanation,
+    }
+    if cti_match:
+        out_res["cti_match"] = cti_match
+    return out_res

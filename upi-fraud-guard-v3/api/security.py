@@ -1,9 +1,11 @@
-"""Bearer-token authentication for provisioned UPI Fraud Guard users.
+"""
+Bearer-token authentication and Role-Based Access Control (RBAC) for UPI Fraud Guard.
 
-Set UPI_FRAUD_GUARD_API_USERS to a JSON object mapping user IDs to long,
-random API tokens. Tokens are hashed before comparison and are never logged.
-With no users configured, only the local-development identity is available;
-run_api.py prevents that mode from binding to a network interface.
+Supported RBAC Roles:
+1. super_admin: Full system access, config, user management, history deletion.
+2. fraud_analyst: Risk assessment, threat intelligence, mule detection, case investigation.
+3. investigation_officer: Case investigation, note updates, resolution tracking.
+4. read_only_auditor: Analytics, model performance view, audit logs.
 """
 from __future__ import annotations
 
@@ -11,8 +13,19 @@ import hashlib
 import hmac
 import json
 import os
+from typing import List, Callable
+from fastapi import Header, HTTPException, Depends
 
-from fastapi import Header, HTTPException
+VALID_ROLES = {"super_admin", "fraud_analyst", "investigation_officer", "read_only_auditor"}
+
+# Default role mapping for local development identity
+USER_ROLES: dict[str, str] = {
+    "local-development": "super_admin",
+    "admin": "super_admin",
+    "analyst": "fraud_analyst",
+    "investigator": "investigation_officer",
+    "auditor": "read_only_auditor",
+}
 
 
 def _user_token_hashes() -> dict[str, str]:
@@ -64,3 +77,21 @@ def current_user_id(authorization: str | None = Header(default=None)) -> str:
     if required:
         raise HTTPException(status_code=401, detail="A valid API token is required", headers={"WWW-Authenticate": "Bearer"})
     return "local-development"
+
+
+def current_user_role(user_id: str = Depends(current_user_id)) -> str:
+    """Resolves the user's role from configuration or defaults to super_admin for local dev."""
+    return USER_ROLES.get(user_id, "fraud_analyst")
+
+
+def require_role(allowed_roles: List[str]) -> Callable:
+    """FastAPI Dependency for Enforcing Role-Based Access Control (RBAC)."""
+    def role_checker(role: str = Depends(current_user_role)) -> str:
+        if role not in allowed_roles and role != "super_admin":
+            raise HTTPException(
+                status_code=403,
+                detail=f"Access denied: Role '{role}' does not have permission for this operation. Required: {allowed_roles}",
+            )
+        return role
+
+    return role_checker

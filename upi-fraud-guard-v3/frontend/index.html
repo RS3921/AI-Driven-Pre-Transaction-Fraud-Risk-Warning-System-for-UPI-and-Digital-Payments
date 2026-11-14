@@ -1,10 +1,313 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UPI Fraud Guard</title><link rel="stylesheet" href="style.css"></head><body>
-<header class="topbar"><div class="topbar-brand"><b>◈</b><div><div class="topbar-name"><span>UPI</span><strong>FRAUD GUARD</strong><span class="live-badge"><i></i>LIVE</span></div><p>Real-time pre-payment protection · Local-first prototype</p></div></div><nav class="topbar-nav"><button class="nav active" data-tab="overview">Overview</button><button class="nav" data-tab="analytics">Analytics</button><button class="icon-btn" title="Open developer API" onclick="window.open('/api-docs','_blank')">Docs ↗</button></nav></header>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UPI Fraud Guard Enterprise Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-brand">
+    <b>◈</b>
+    <div>
+      <div class="topbar-name"><span>UPI</span><strong>FRAUD GUARD ENTERPRISE</strong><span class="live-badge"><i></i>LIVE</span></div>
+      <p>Real-time pre-payment risk intelligence & decision support</p>
+    </div>
+  </div>
+  <div class="auth-controls" role="group" aria-label="API authentication">
+    <label class="sr-only" for="api-token">Bearer API token</label>
+    <input id="api-token" type="password" autocomplete="off" placeholder="API token" aria-label="Bearer API token">
+    <button id="save-api-token" class="text-btn">Connect</button>
+    <span id="session-role" aria-live="polite">Disconnected</span>
+  </div>
+  <nav class="topbar-nav">
+    <button class="nav active" data-tab="overview">Overview</button>
+    <button class="nav" data-tab="auie">Adaptive URL Intel</button>
+    <button class="nav" data-tab="cti">Autonomous CTI Centre</button>
+    <button class="nav" data-tab="feeds">Dual-Feed Threat</button>
+    <button class="nav" data-tab="mule">Mule Graph</button>
+    <button class="nav" data-tab="investigations">Investigations</button>
+    <button class="nav" data-tab="models">Model Drift</button>
+    <button class="icon-btn" title="Open Swagger API Docs" onclick="window.open('/api-docs','_blank')">API Docs ↗</button>
+  </nav>
+</header>
+
 <main>
+<!-- TAB 1: OVERVIEW -->
 <section id="overview" class="tab active">
-<div class="metrics"><article>
-<span>◌</span><p>Total checks</p><b id="metric-total">0</b><small>all local audit records</small></article><article><span>▲</span><p>Flagged</p><b id="metric-flagged">0</b><small>suspicious + high risk</small></article><article><span>✓</span><p>Clear</p><b id="metric-clear">0</b><small>no fraud pattern found</small></article><article><span>!</span><p>High-risk alerts</p><b id="metric-alerts">0</b><small>require careful review</small></article></div>
-<div class="overview-grid"><section class="panel trend"><div class="panel-title"><div><p class="eyebrow">RISK PULSE</p><h3>Risk activity</h3></div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="chip-legend"><span class="chip danger"><i></i>Flagged</span><span class="chip safe"><i></i>Clear</span></div><div class="range"><button data-range="1">24h</button><button class="selected" data-range="7">7d</button><button data-range="30">30d</button><button class="goto-custom" data-goto="analytics" data-open-custom="1">Custom</button></div></div></div><div id="pulse-chart" class="chart"></div></section><section class="panel distribution"><p class="eyebrow">VERDICT DISTRIBUTION</p><h3>Audit outcomes</h3><div class="donut-wrap"><div id="donut" class="donut"><b id="donut-total">0</b><small>checks</small></div><div id="legend" class="legend"></div></div></section></div>
+  <div class="metrics">
+    <article><span>◌</span><p>Total checks</p><b id="metric-total">0</b><small>all audit records</small></article>
+    <article><span>▲</span><p>Flagged</p><b id="metric-flagged">0</b><small>suspicious + high risk</small></article>
+    <article><span>✓</span><p>Clear</p><b id="metric-clear">0</b><small>no fraud pattern found</small></article>
+    <article><span>!</span><p>High-risk alerts</p><b id="metric-alerts">0</b><small>require careful review</small></article>
+  </div>
+  <div class="overview-grid">
+    <section class="panel trend">
+      <div class="panel-title">
+        <div><p class="eyebrow">RISK PULSE</p><h3>Risk activity</h3></div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="chip-legend"><span class="chip danger"><i></i>Flagged</span><span class="chip safe"><i></i>Clear</span></div>
+          <div class="range"><button data-range="1">24h</button><button class="selected" data-range="7">7d</button><button data-range="30">30d</button></div>
+        </div>
+      </div>
+      <div id="pulse-chart" class="chart"></div>
+    </section>
+    <section class="panel distribution">
+      <p class="eyebrow">VERDICT DISTRIBUTION</p><h3>Audit outcomes</h3>
+      <div class="donut-wrap">
+        <div id="donut" class="donut"><b id="donut-total">0</b><small>checks</small></div>
+        <div id="legend" class="legend"></div>
+      </div>
+    </section>
+  </div>
 </section>
-<section id="analytics" class="tab"><div class="analytics-head"><div><p class="eyebrow">LOCAL AUDIT INTELLIGENCE</p><h2>Evidence, not just alerts.</h2><p>Checks are kept in this backend’s local audit log. Change the range, or pick an exact date and time window, to explore patterns.</p></div><div class="range-block"><div class="range large"><button data-range="1">24 hours</button><button class="selected" data-range="7">7 days</button><button data-range="30">30 days</button><button data-range="custom" id="customToggle">Custom range</button></div><div id="customRangeBar" class="custom-range-bar"><label>From<input type="datetime-local" id="rangeFrom"></label><label>To<input type="datetime-local" id="rangeTo"></label><button id="applyCustomRange" class="text-btn primary">Apply</button><span id="customRangeError" class="range-error"></span></div></div></div><div class="analytics-grid"><section class="panel analytics-chart"><p class="eyebrow">RISK TREND</p><div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px"><h3>Flagged vs. clear checks</h3><div class="chip-legend"><span class="chip danger"><i></i>Flagged</span><span class="chip safe"><i></i>Clear</span></div></div><p id="chart-window-label" class="chart-window-label"></p><div id="analytics-chart" class="chart big"></div></section><section class="panel"><p class="eyebrow">RISK COMPOSITION</p><h3>Verdict share</h3><div id="analytics-legend" class="big-legend"></div></section></div><section class="panel audit"><div class="panel-title"><div><p class="eyebrow">AUDIT TRAIL</p><h3>Recent decisions</h3><small id="audit-window-label" class="audit-window-label"></small></div><button id="refresh-history" class="text-btn">Refresh data</button></div><div id="history-list" class="history-empty">No completed checks yet.</div></section></section>
-<footer>UPI Fraud Guard · Educational project · A decision-support warning, not an automatic payment block.</footer></main><script src="script.js"></script></body></html>
+
+<!-- TAB AUIE: ADAPTIVE URL INTELLIGENCE ENGINE -->
+<section id="auie" class="tab">
+  <div class="analytics-head">
+    <div>
+      <p class="eyebrow">CONTINUOUS REPUTATION & FALSE-POSITIVE MITIGATION</p>
+      <h2>Adaptive URL Intelligence Engine (AUIE)</h2>
+      <p>Multi-source reputation aggregation across 4 distinct states (Confirmed Malicious, Suspicious, Unknown, Known Benign).</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button id="refresh-auie-btn" class="text-btn primary">Refresh Intelligence</button>
+    </div>
+  </div>
+
+  <div class="metrics" style="margin-bottom:20px">
+    <article><span>🌐</span><p>Trusted Domains</p><b id="auie-trusted-count">0</b><small>verified allowlist entries</small></article>
+    <article><span>🛡️</span><p>Known Benign</p><b id="auie-benign-count">0</b><small>confirmed safe URLs</small></article>
+    <article><span>⚠️</span><p>Suspicious / Malicious</p><b id="auie-threat-count">0</b><small>flagged threats</small></article>
+    <article><span>📡</span><p>Active Providers</p><b id="auie-provider-count">0</b><small>reputation adapters</small></article>
+  </div>
+
+  <!-- REAL-TIME URL LOOKUP TESTER & REPUTATION RESULT -->
+  <section class="panel" style="margin-bottom:20px">
+    <div class="panel-title">
+      <div><p class="eyebrow">URL REPUTATION TESTER</p><h3>Real-Time URL Reputation Lookup</h3></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:15px">
+      <input id="auie-url-input" type="text" placeholder="Enter URL (e.g. https://sbi.co.in/login or http://phish.xyz)" style="flex:1;padding:10px;border-radius:4px;border:1px solid #ccc">
+      <button id="auie-lookup-btn" class="text-btn primary">Analyze URL</button>
+    </div>
+    <div id="auie-lookup-result" style="display:none;background:#f8f9fa;padding:15px;border-radius:6px;border:1px solid #e9ecef"></div>
+  </section>
+
+  <div class="overview-grid" style="margin-bottom:20px">
+    <!-- TRUSTED DOMAINS ALLOWLIST -->
+    <section class="panel">
+      <div class="panel-title">
+        <div><p class="eyebrow">VERIFIED DOMAIN ALLOWLIST</p><h3>Trusted Domains</h3></div>
+        <button id="add-trusted-domain-btn" class="text-btn" data-analyst-action>+ Add Trusted Domain</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Domain</th><th>Category</th><th>Subdomains</th><th>Path Check</th><th>Added By</th><th>Action</th></tr>
+          </thead>
+          <tbody id="trusted-domains-table-body">
+            <tr><td colspan="6" style="text-align:center;padding:20px">Loading trusted domains...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PROVIDER & FEED HEALTH -->
+    <section class="panel">
+      <div class="panel-title">
+        <div><p class="eyebrow">INTELLIGENCE SOURCES</p><h3>Providers & Feed Health</h3></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Provider / Feed</th><th>Status</th><th>Last Success</th><th>Records Ingested</th></tr>
+          </thead>
+          <tbody id="provider-health-table-body">
+            <tr><td colspan="4" style="text-align:center;padding:20px">Loading provider health...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- FALSE-POSITIVE FEEDBACK TRIAGE -->
+  <section class="panel">
+    <div class="panel-title">
+      <div><p class="eyebrow">ANALYST TRIAGE</p><h3>False-Positive Feedback Reports</h3></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>URL / Domain</th><th>Reported</th><th>Claimed</th><th>Reporter</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="auie-feedback-table-body">
+          <tr><td colspan="8" style="text-align:center;padding:20px">Loading false-positive feedback reports...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+<!-- TAB 2: AUTONOMOUS INTELLIGENCE CENTRE (NEW PHASE 6) -->
+<section id="cti" class="tab">
+  <div class="analytics-head">
+    <div>
+      <p class="eyebrow">AUTONOMOUS CTI & CONTINUOUS LEARNING ENGINE</p>
+      <h2>Cyber Threat Intelligence Centre</h2>
+      <p>Automated collection, indicator verification, scam pattern extraction, and model registry controls.</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button id="trigger-collection-btn" class="text-btn primary">⚡ Trigger Collection Now</button>
+      <button id="refresh-cti-btn" class="text-btn">Refresh Data</button>
+    </div>
+  </div>
+
+  <div class="metrics" style="margin-bottom:20px">
+    <article><span>🔒</span><p>Total Indicators</p><b id="cti-total-indicators">0</b><small>normalized CTI indicators</small></article>
+    <article><span>⚡</span><p>Verified Malicious</p><b id="cti-verified-count">0</b><small>high-confidence threats</small></article>
+    <article><span>⚠️</span><p>Suspicious / Unverified</p><b id="cti-suspicious-count">0</b><small>under investigation</small></article>
+    <article><span>🌐</span><p>Active Sources</p><b id="cti-sources-count">10</b><small>Indian & global feeds</small></article>
+  </div>
+
+  <!-- SOURCE MONITOR & LOGS -->
+  <div class="overview-grid" style="margin-bottom:20px">
+    <section class="panel">
+      <p class="eyebrow">SOURCE MONITORING</p>
+      <h3>Registered Threat Feeds</h3>
+      <div id="cti-sources-list" style="margin-top:14px">Loading sources...</div>
+    </section>
+
+    <section class="panel">
+      <p class="eyebrow">SCAM PATTERNS</p>
+      <h3>Extracted Scam Categories</h3>
+      <div id="cti-patterns-list" style="margin-top:14px">Loading patterns...</div>
+    </section>
+  </div>
+
+  <!-- THREAT INDICATOR EXPLORER -->
+  <section class="panel audit" style="margin-bottom:20px">
+    <div class="panel-title">
+      <div>
+        <p class="eyebrow">THREAT EXPLORER</p>
+        <h3>Extracted Threat Indicators</h3>
+      </div>
+      <div style="display:flex;gap:10px">
+        <input type="text" id="ctiSearch" placeholder="Search indicator value..." style="padding:6px 12px;border-radius:6px;border:1px solid #333;background:#111;color:#fff">
+        <select id="ctiTypeFilter" style="padding:6px 12px;border-radius:6px;border:1px solid #333;background:#111;color:#fff">
+          <option value="">All Types</option>
+          <option value="url">URL</option>
+          <option value="domain">Domain</option>
+          <option value="ip">IP</option>
+          <option value="vpa">VPA</option>
+          <option value="hash">Hash</option>
+          <option value="email">Email</option>
+        </select>
+        <select id="ctiStatusFilter" style="padding:6px 12px;border-radius:6px;border:1px solid #333;background:#111;color:#fff">
+          <option value="">All Statuses</option>
+          <option value="Verified Malicious">Verified Malicious</option>
+          <option value="Reported Unverified">Reported Unverified</option>
+          <option value="Suspicious">Suspicious</option>
+          <option value="Allowlisted">Allowlisted</option>
+          <option value="Expired">Expired</option>
+        </select>
+      </div>
+    </div>
+    <div id="cti-indicators-list">Loading indicators...</div>
+  </section>
+
+  <!-- MODEL REGISTRY & APPROVAL WORKFLOW -->
+  <section class="panel audit" style="margin-bottom:20px">
+    <div class="panel-title">
+      <div>
+        <p class="eyebrow">MODEL REGISTRY</p>
+        <h3>ML Model Registry & Approval Workflow</h3>
+      </div>
+      <button id="train-candidate-btn" class="text-btn primary">🏋️ Train Candidate Model</button>
+    </div>
+    <div id="cti-models-list">Loading model registry...</div>
+  </section>
+
+  <!-- COLLECTION AUDIT LOGS -->
+  <section class="panel audit">
+    <div class="panel-title">
+      <h3>Background Collection Logs</h3>
+    </div>
+    <div id="cti-logs-list">Loading logs...</div>
+  </section>
+</section>
+
+<!-- TAB 3: DUAL-FEED MONITORS -->
+<section id="feeds" class="tab">
+  <div class="analytics-head">
+    <div><p class="eyebrow">DUAL-FEED INTELLIGENCE ARCHITECTURE</p><h2>Real-Time Threat & Transaction Feeds</h2></div>
+  </div>
+  <div class="overview-grid">
+    <section class="panel">
+      <p class="eyebrow">FEED 1: THREAT INTELLIGENCE</p>
+      <h3>Known VPA & Phishing Repositories</h3>
+      <div id="threat-feed-info" style="margin-top:14px">Loading feed status...</div>
+      <div style="margin-top:20px;padding-top:15px;border-top:1px solid #2A1418">
+        <h4>Report / Add Threat VPA</h4>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <input type="text" id="newThreatVpa" placeholder="e.g. suspicious.pay@upi" style="flex:1;padding:8px;border-radius:6px;border:1px solid #333;background:#111;color:#fff">
+          <button id="addThreatBtn" class="text-btn primary">Add Threat</button>
+        </div>
+        <span id="threatAddStatus" style="font-size:12px;color:#34D399;display:block;margin-top:6px"></span>
+      </div>
+    </section>
+    <section class="panel">
+      <p class="eyebrow">FEED 2: TRANSACTION INTELLIGENCE</p>
+      <h3>Behavioral & Velocity Stream</h3>
+      <div id="txn-feed-info" style="margin-top:14px">Loading feed status...</div>
+    </section>
+  </div>
+</section>
+
+<!-- TAB 4: MULE ACCOUNT GRAPH -->
+<section id="mule" class="tab">
+  <div class="analytics-head">
+    <div><p class="eyebrow">GRAPH NETWORK ANALYSIS</p><h2>Mule Account & Money Trail Detector</h2><p>Identifies high fan-in recipient nodes and circular transaction loops using NetworkX graph analysis.</p></div>
+  </div>
+  <div id="mule-summary-card" class="panel" style="margin-bottom:20px">
+    <h3>Network Graph Statistics</h3>
+    <div id="mule-stats" style="margin-top:10px">Loading graph statistics...</div>
+  </div>
+  <section class="panel audit">
+    <div class="panel-title"><h3>Suspicious Mule Account Candidates</h3></div>
+    <div id="mule-candidates-list">Loading candidates...</div>
+  </section>
+</section>
+
+<!-- TAB 5: INVESTIGATIONS -->
+<section id="investigations" class="tab">
+  <div class="analytics-head">
+    <div><p class="eyebrow">FRAUD INVESTIGATION CENTRE</p><h2>Centralized Suspicious Case Queue</h2></div>
+    <button id="refresh-cases" class="text-btn">Refresh Cases</button>
+  </div>
+  <section class="panel audit">
+    <div id="cases-list">No investigation cases recorded.</div>
+  </section>
+</section>
+
+<!-- TAB 6: MODEL MONITORING -->
+<section id="models" class="tab">
+  <div class="analytics-head">
+    <div><p class="eyebrow">MODEL DRIFT & METRICS</p><h2>Statistical Population Stability & Evaluation</h2></div>
+  </div>
+  <div id="drift-alert-box" class="panel" style="margin-bottom:20px;border-left:4px solid #FBBF24">
+    <h3>Data Drift Analysis</h3>
+    <div id="drift-details" style="margin-top:10px">Calculating drift...</div>
+  </div>
+  <section class="panel">
+    <h3>Model Precision / Recall Metrics</h3>
+    <div id="model-metrics-container" style="margin-top:14px">Loading metrics...</div>
+  </section>
+</section>
+
+<footer>UPI Fraud Guard Enterprise · Autonomous Threat Intelligence Platform.</footer>
+</main>
+<script src="script.js"></script>
+</body>
+</html>

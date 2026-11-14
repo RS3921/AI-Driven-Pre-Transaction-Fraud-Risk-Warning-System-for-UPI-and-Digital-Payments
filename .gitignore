@@ -1,0 +1,50 @@
+# Environment & Credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.crt
+*.key
+*.keystore
+*.jks
+local.properties
+
+# Databases, Locks, and Backups
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.db.bak*
+*.lock
+*.log
+*.bak
+upi-fraud-guard-v3/data/risk_checks.db
+upi-fraud-guard-v3/data/risk_checks.db.bak_pre_remediation
+upi-fraud-guard-v3/data/cti_collector.lock
+
+# Python Caches & Environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+ENV/
+.pytest_cache/
+
+# IDE & OS Files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Android Build & Gradle Artifacts
+.gradle/
+build/
+app/build/
+.kotlin/
+upi-fraud-guard-android/.gradle/
+upi-fraud-guard-android/.idea/
+upi-fraud-guard-android/.kotlin/
+upi-fraud-guard-android/app/build/
+upi-fraud-guard-android/local.properties
