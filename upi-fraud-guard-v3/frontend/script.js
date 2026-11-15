@@ -559,15 +559,64 @@ if (auieLookupBtn) {
     if (!url) return;
     const resContainer = $('auie-lookup-result');
     resContainer.style.display = 'block';
-    resContainer.innerHTML = '<p>Analyzing URL reputation across AUIE providers...</p>';
+    resContainer.innerHTML = '<p>Analyzing URL reputation & website behavior across AUIE providers...</p>';
     try {
       const data = await (await apiFetch(`/api/auie/reputation?url=${encodeURIComponent(url)}&bypass_cache=true`)).json();
+      const exp = data.explanation || {};
       const stateBadge = data.reputation_state === 'CONFIRMED_MALICIOUS' ? 'danger' : data.reputation_state === 'SUSPICIOUS' ? 'warning' : data.reputation_state === 'KNOWN_BENIGN' ? 'safe' : 'neutral';
-      resContainer.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <h4 style="margin:0">Canonical URL: <code>${escapeHtml(data.canonical_url || data.raw_url)}</code></h4>
-          <span class="badge ${stateBadge}" style="font-size:1.1em;padding:6px 12px">${escapeHtml(data.reputation_state)}</span>
+
+      let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <h4 style="margin:0">Target URL: <code>${escapeHtml(data.canonical_url || data.raw_url)}</code></h4>
+          <div>
+            <span class="chip" style="margin-right:8px">${escapeHtml(exp.category_description || exp.url_type || 'URL')}</span>
+            <span class="badge ${stateBadge}" style="font-size:1.1em;padding:6px 12px">${escapeHtml(data.reputation_state)}</span>
+          </div>
         </div>
+
+        <div class="alert-box ${stateBadge}" style="margin-bottom:12px;padding:12px;border-radius:6px;background:${stateBadge === 'danger' ? '#f8d7da' : stateBadge === 'warning' ? '#fff3cd' : stateBadge === 'safe' ? '#d1e7dd' : '#e2e3e5'};color:#000">
+          <p style="margin:0 0 6px 0"><b>HUMAN-READABLE ADVISORY:</b> ${escapeHtml(exp.human_readable_explanation || 'Analysis complete.')}</p>
+          <p style="margin:0"><b>RECOMMENDED ACTION:</b> ${escapeHtml(exp.recommended_action || 'Proceed with normal payment precautions.')}</p>
+        </div>
+
+        <p><b>Domain:</b> ${escapeHtml(data.domain || 'N/A')} | <b>Risk Score:</b> ${(data.risk_score * 100).toFixed(1)}% | <b>Confidence:</b> ${(data.confidence_score * 100).toFixed(0)}% | <b>Latency:</b> ${data.latency_ms} ms</p>
+      `;
+
+      if (exp.positive_indicators && exp.positive_indicators.length) {
+        html += `<p style="color:#198754;margin-bottom:4px"><b>✓ Positive Security Indicators:</b></p><ul>`;
+        exp.positive_indicators.forEach(i => {
+          html += `<li><b>${escapeHtml(i.name)}:</b> ${escapeHtml(i.finding)} <small>(${escapeHtml(i.why_it_matters)})</small></li>`;
+        });
+        html += `</ul>`;
+      }
+
+      if (exp.negative_indicators && exp.negative_indicators.length) {
+        html += `<p style="color:#dc3545;margin-bottom:4px"><b>⚠️ Negative Risk Indicators:</b></p><ul>`;
+        exp.negative_indicators.forEach(i => {
+          html += `<li><b>${escapeHtml(i.name)}:</b> ${escapeHtml(i.finding)} <small>(${escapeHtml(i.why_it_matters)})</small></li>`;
+        });
+        html += `</ul>`;
+      }
+
+      // Technical Details Collapsible for Fraud Analysts
+      html += `
+        <details style="margin-top:12px;padding:8px;background:#fff;border:1px solid #ddd;border-radius:4px">
+          <summary style="cursor:pointer;font-weight:bold">🔍 Technical Details & Raw Evidence Trace (for Fraud Analysts)</summary>
+          <div style="margin-top:8px;font-size:0.9em">
+            <p><b>URL Classification Type:</b> ${escapeHtml(exp.url_type || 'UNKNOWN')}</p>
+            <p><b>Providers Consulted:</b> ${(data.providers_consulted || []).length ? escapeHtml(data.providers_consulted.join(', ')) : 'Local Verified CTI & Allowlist Cache'}</p>
+            <p><b>Redirect Trace Hops:</b> ${exp.redirect_analysis && exp.redirect_analysis.hop_count ? exp.redirect_analysis.hop_count : 0} ${exp.redirect_analysis && exp.redirect_analysis.has_shortener ? '(Link Shortener Detected)' : ''}</p>
+            ${exp.unavailable_checks && exp.unavailable_checks.length ? `<p><b>Unavailable / Unconfigured Checks:</b> ${escapeHtml(exp.unavailable_checks.join(' · '))}</p>` : ''}
+          </div>
+        </details>
+      `;
+
+      resContainer.innerHTML = html;
+    } catch (err) {
+      resContainer.innerHTML = `<p style="color:red">Lookup Error: ${escapeHtml(err.message)}</p>`;
+    }
+  };
+}
         <p><b>Domain:</b> ${escapeHtml(data.domain || 'N/A')} | <b>Risk Score:</b> ${(data.risk_score * 100).toFixed(1)}% | <b>Confidence:</b> ${(data.confidence_score * 100).toFixed(0)}% | <b>Latency:</b> ${data.latency_ms} ms</p>
         <p><b>Reasons & Attribution:</b></p>
         <ul>${(data.reasons || []).map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>
