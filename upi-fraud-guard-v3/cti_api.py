@@ -61,6 +61,39 @@ def get_cti_status(user_id: str = Depends(current_user_id)):
     }
 
 
+@router.get("/health")
+def get_cti_health(user_id: str = Depends(current_user_id)):
+    """Returns comprehensive CTI engine health, provider statuses, database statistics, and ML model status."""
+    sources = cti_db.get_sources()
+    db_stats = cti_db.get_cti_database_stats()
+    from cti_ml_pipeline import cti_registry
+    models = cti_registry.list_models()
+    active_model = next((m for m in models if m.get("is_active")), None)
+    feedback_reports = cti_db.get_false_positive_feedback(limit=500)
+
+    feedback_counts = {
+        "pending": sum(1 for f in feedback_reports if f.get("status") == "PENDING_REVIEW"),
+        "approved": sum(1 for f in feedback_reports if f.get("status") == "APPROVED"),
+        "rejected": sum(1 for f in feedback_reports if f.get("status") == "REJECTED"),
+    }
+
+    return {
+        "engine_status": "Operational",
+        "worker_running": cti_collector_worker._running,
+        "interval_minutes": int(cti_collector_worker.interval_seconds / 60),
+        "provider_statuses": cti_db.get_provider_statuses(),
+        "database_stats": db_stats,
+        "ml_health": {
+            "active_model": active_model.get("model_id") if active_model else "models/transaction_model.joblib",
+            "active_version": active_model.get("version") if active_model else "v1.0-baseline",
+            "total_candidates": len(models),
+            "deployment_eligible": False,  # PaySim temporal restriction active
+            "deployment_lock_reason": "Bundled PaySim dataset lacks granular timestamps required for temporal validation",
+        },
+        "feedback_triage": feedback_counts,
+    }
+
+
 @router.post("/collect")
 async def trigger_cti_collection(
     user_id: str = Depends(current_user_id),

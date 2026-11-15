@@ -93,8 +93,19 @@ class CTICollectorWorker:
         logger.info("Executing scheduled CTI intelligence collection round...")
         results: List[Dict[str, Any]] = []
 
-        # Run connectors sequentially or concurrently in executor
+        # 1. Purge or expire outdated indicators
+        try:
+            expired_purged = cti_db.purge_expired_indicators()
+            if expired_purged > 0:
+                logger.info("Purged/updated %d expired CTI threat indicators.", expired_purged)
+        except Exception as p_err:
+            logger.warning("Error purging expired indicators: %s", p_err)
+
+        # 2. Run connectors sequentially in thread pool executor
         loop = asyncio.get_running_loop()
+        any_new_indicators = False
+        from cti_matcher import cti_matcher
+
         for connector in self.connectors:
             if not self._running and self._task and self._task.cancelling():
                 break
@@ -102,6 +113,8 @@ class CTICollectorWorker:
                 # Run sync connector fetch in thread pool
                 res = await loop.run_in_executor(None, connector.collect)
                 results.append(res)
+                if res.get("inserted_indicators", 0) > 0:
+                    any_new_indicators = True
             except Exception as connector_err:
                 logger.error(f"Connector '{connector.name}' failed during collection: {connector_err}")
                 results.append({
@@ -112,6 +125,11 @@ class CTICollectorWorker:
                     "duplicate_indicators": 0,
                     "error_details": str(connector_err),
                 })
+
+        # 3. Invalidate CTI matcher cache if new indicators were added
+        if any_new_indicators:
+            cti_matcher.invalidate_cache()
+            logger.info("CTI matcher cache invalidated to apply newly ingested threat indicators immediately.")
 
         logger.info(f"Completed CTI collection round. Processed {len(results)} sources.")
         return results

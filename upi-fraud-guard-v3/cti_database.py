@@ -703,6 +703,59 @@ class CTIDatabase:
             conn.commit()
             return True
 
+    def purge_expired_indicators(self) -> int:
+        """Purges or updates status of indicators whose expiration timestamp has passed."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with closing(self._get_connection()) as conn:
+            cur = conn.execute(
+                "UPDATE cti_indicators SET verification_status='Expired' WHERE expires_at IS NOT NULL AND expires_at < ? AND verification_status != 'Expired'",
+                (now_iso,),
+            )
+            conn.commit()
+            return cur.rowcount
+
+    def get_cti_database_stats(self) -> Dict[str, Any]:
+        """Returns summary statistics of active, verified, expired, and category-level CTI indicators."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with closing(self._get_connection()) as conn:
+            total = conn.execute("SELECT COUNT(*) FROM cti_indicators").fetchone()[0]
+            verified = conn.execute("SELECT COUNT(*) FROM cti_indicators WHERE verification_status='Verified Malicious' AND quarantined=0").fetchone()[0]
+            expired = conn.execute("SELECT COUNT(*) FROM cti_indicators WHERE verification_status='Expired' OR (expires_at IS NOT NULL AND expires_at < ?)", (now_iso,)).fetchone()[0]
+            quarantined = conn.execute("SELECT COUNT(*) FROM cti_indicators WHERE quarantined=1").fetchone()[0]
+
+            by_source_rows = conn.execute("SELECT source_name, COUNT(*) FROM cti_indicators GROUP BY source_name").fetchall()
+            by_category_rows = conn.execute("SELECT threat_category, COUNT(*) FROM cti_indicators GROUP BY threat_category").fetchall()
+
+            return {
+                "total_indicators": total,
+                "verified_malicious": verified,
+                "expired_indicators": expired,
+                "quarantined_indicators": quarantined,
+                "by_source": dict(by_source_rows),
+                "by_category": dict(by_category_rows),
+            }
+
+    def get_auie_analysis_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+        with closing(self._get_connection()) as conn:
+            rows = conn.execute("SELECT * FROM auie_analysis_history ORDER BY analysis_id DESC LIMIT ?", (limit,)).fetchall()
+            cols = [c[1] for c in conn.execute("PRAGMA table_info(auie_analysis_history)").fetchall()]
+            results = []
+            for r in rows:
+                item = dict(zip(cols, r))
+                item["reasons"] = json.loads(item.get("reasons") or "[]")
+                item["providers_consulted"] = json.loads(item.get("providers_consulted") or "[]")
+                results.append(item)
+            return results
+
+    def get_approved_learning_dataset(self) -> List[Dict[str, Any]]:
+        """Returns approved analyst feedback records eligible to enter training datasets."""
+        with closing(self._get_connection()) as conn:
+            rows = conn.execute(
+                "SELECT * FROM auie_false_positive_feedback WHERE status='APPROVED' ORDER BY feedback_id ASC"
+            ).fetchall()
+            cols = [c[1] for c in conn.execute("PRAGMA table_info(auie_false_positive_feedback)").fetchall()]
+            return [dict(zip(cols, r)) for r in rows]
+
 
 # Global database instance
 cti_db = CTIDatabase()
